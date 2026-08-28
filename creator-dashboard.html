@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>応援ウィジェット｜クリエイターダッシュボード</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --surface: #151528;
+    --card: #1a1a32;
+    --border: #2a2a4a;
+    --accent1: #8b5cf6;
+    --accent2: #ec4899;
+    --accent3: #06b6d4;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --grad1: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --grad2: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a1a40 0%, #0d0d1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 72px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: var(--grad1);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 13px; color: var(--muted); }
+  .header-title strong { color: var(--text); font-size: 16px; display: block; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .creator-chip {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 40px; padding: 6px 16px 6px 8px;
+  }
+  .creator-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--grad1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .creator-name { font-size: 14px; font-weight: 600; }
+  .creator-tag { font-size: 11px; color: var(--accent1); }
+  .period-badge {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 14px;
+    font-size: 13px; color: var(--muted);
+  }
+  .period-badge span { color: var(--text); font-weight: 500; }
+
+  /* Layout */
+  .main { padding: 28px 32px; max-width: 1440px; margin: 0 auto; }
+
+  /* Section title */
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 16px; margin-top: 32px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent1); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi-card.purple::before { background: var(--grad1); }
+  .kpi-card.cyan::before { background: var(--grad2); }
+  .kpi-card.gold::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .kpi-card.green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .kpi-card.pink::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
+  .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+  .kpi-value { font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
+  .kpi-unit { font-size: 13px; color: var(--muted); margin-left: 3px; font-weight: 400; }
+  .kpi-delta {
+    margin-top: 8px; font-size: 12px; display: flex; align-items: center; gap: 4px;
+  }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-icon {
+    position: absolute; right: 16px; top: 16px;
+    font-size: 24px; opacity: 0.15;
+  }
+
+  /* Charts grid */
+  .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+  }
+  .chart-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .chart-card-title { font-size: 15px; font-weight: 700; }
+  .chart-card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .chart-wrap { position: relative; }
+
+  /* Revenue highlight */
+  .rev-highlight {
+    background: linear-gradient(135deg, #1e1040 0%, #1a1a32 100%);
+    border: 1px solid var(--accent1);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex; gap: 32px; align-items: flex-start;
+  }
+  .rev-main { flex: 1; }
+  .rev-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .rev-amount { font-size: 42px; font-weight: 900; letter-spacing: -1px; background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .rev-breakdown { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+  .rev-item { }
+  .rev-item-label { font-size: 11px; color: var(--muted); }
+  .rev-item-val { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  /* Fan table */
+  .fan-table { width: 100%; border-collapse: collapse; }
+  .fan-table th {
+    text-align: left; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .fan-table td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .fan-table tr:last-child td { border-bottom: none; }
+  .fan-table tr:hover td { background: rgba(139,92,246,0.05); }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    font-size: 12px; font-weight: 700;
+  }
+  .rank-1 { background: #f59e0b; color: #000; }
+  .rank-2 { background: #94a3b8; color: #000; }
+  .rank-3 { background: #b45309; color: #fff; }
+  .rank-n { background: var(--border); color: var(--muted); }
+  .fan-id { color: var(--muted); font-size: 12px; }
+  .score-bar {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .score-track {
+    flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .score-fill { height: 100%; border-radius: 2px; background: var(--grad1); }
+  .score-val { font-size: 13px; font-weight: 600; color: var(--accent1); min-width: 32px; text-align: right; }
+  .gift-badge {
+    font-size: 11px; background: rgba(139,92,246,0.15);
+    color: var(--accent1); padding: 2px 8px; border-radius: 20px; font-weight: 600;
+  }
+
+  /* Gift panel */
+  .gift-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .gift-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; text-align: center;
+    transition: border-color 0.2s;
+  }
+  .gift-item:hover { border-color: var(--accent1); }
+  .gift-emoji { font-size: 32px; margin-bottom: 8px; }
+  .gift-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .gift-count { font-size: 12px; color: var(--muted); }
+  .gift-rev { font-size: 14px; font-weight: 700; color: var(--green); margin-top: 4px; }
+  .gift-active { border-color: var(--accent1) !important; background: rgba(139,92,246,0.05); }
+
+  /* Notification feed */
+  .notif-list { display: flex; flex-direction: column; gap: 10px; }
+  .notif-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px; border-radius: 10px; background: var(--surface);
+  }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .notif-dot.purple { background: var(--accent1); }
+  .notif-dot.pink { background: var(--accent2); }
+  .notif-dot.gold { background: var(--gold); }
+  .notif-dot.cyan { background: var(--accent3); }
+  .notif-text { font-size: 13px; line-height: 1.5; }
+  .notif-text strong { color: var(--accent1); }
+  .notif-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Tag pills */
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .tag-purple { background: rgba(139,92,246,0.15); color: var(--accent1); }
+  .tag-green { background: rgba(16,185,129,0.15); color: var(--green); }
+  .tag-gold { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+  /* KPI target row */
+  .target-row { display: flex; gap: 16px; margin-bottom: 24px; }
+  .target-card {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .target-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .target-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .target-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .target-fill { height: 100%; border-radius: 4px; }
+  .target-fill.good { background: linear-gradient(90deg, #10b981, #34d399); }
+  .target-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .target-text { font-size: 13px; font-weight: 700; }
+  .target-goal { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Nav tabs */
+  .nav-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 0; width: fit-content; }
+  .nav-tab { font-size: 13px; padding: 7px 16px; border-radius: 7px; cursor: pointer; color: var(--muted); transition: all 0.15s; border: none; background: none; font-family: inherit; }
+  .nav-tab.active { background: var(--card); color: var(--text); font-weight: 600; }
+
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .gap16 { gap: 16px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+    .chart-grid-3 { grid-template-columns: 1fr 1fr; }
+    .gift-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-mark">⭐</div>
+  <div>
+    <div class="header-title">
+      <strong>応援ウィジェット</strong>
+      クリエイターダッシュボード
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="period-badge">表示期間: <span>2026年8月</span></div>
+    <div class="creator-chip">
+      <div class="creator-avatar">🎨</div>
+      <div>
+        <div class="creator-name">Sakura Bloom</div>
+        <div class="creator-tag">VTuber・イラストレーター</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Revenue Highlight -->
+  <div style="margin-top: 8px;" class="rev-highlight">
+    <div class="rev-main">
+      <div class="rev-label">今月の推定受取額（クリエイター還元分）</div>
+      <div class="rev-amount">¥214,800</div>
+      <div style="font-size:12px; color: var(--muted); margin-top:6px;">ファン課金還元（GMVの約70%）+ 協賛ボーナス ¥18,000</div>
+    </div>
+    <div class="rev-breakdown">
+      <div class="rev-item">
+        <div class="rev-item-label">月間GMV</div>
+        <div class="rev-item-val" style="color: var(--accent1);">¥280,000</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-label">ギフト販売数</div>
+        <div class="rev-item-val" style="color: var(--accent2);">560 個</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-label">アクティブファン</div>
+        <div class="rev-item-val" style="color: var(--accent3);">2,340 人</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-label">ウィジェット設置率</div>
+        <div class="rev-item-val" style="color: var(--gold);">64%</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-label">30日継続率</div>
+        <div class="rev-item-val" style="color: var(--green);">71%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="section-title">KPI サマリー</div>
+  <div class="kpi-grid">
+    <div class="kpi-card purple">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">今月の受取収益</div>
+      <div class="kpi-value">21.4<span class="kpi-unit">万円</span></div>
+      <div class="kpi-delta up">▲ +18% 先月比</div>
+    </div>
+    <div class="kpi-card pink">
+      <div class="kpi-icon">❤️</div>
+      <div class="kpi-label">課金ファン数（累計）</div>
+      <div class="kpi-value">2,340<span class="kpi-unit">人</span></div>
+      <div class="kpi-delta up">▲ +127 先月比</div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-icon">📱</div>
+      <div class="kpi-label">ウィジェット設置中</div>
+      <div class="kpi-value">1,498<span class="kpi-unit">台</span></div>
+      <div class="kpi-delta up">▲ 設置率 64%</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-icon">🔄</div>
+      <div class="kpi-label">30日継続利用率</div>
+      <div class="kpi-value">71<span class="kpi-unit">%</span></div>
+      <div class="kpi-delta up">▲ 目標 60% を達成</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">🎯</div>
+      <div class="kpi-label">購入転換率（CVR）</div>
+      <div class="kpi-value">3.2<span class="kpi-unit">%</span></div>
+      <div class="kpi-delta up">▲ 目標 2〜3% を達成</div>
+    </div>
+  </div>
+
+  <!-- KPI Targets -->
+  <div class="section-title">PoB 撤退基準 vs 実績</div>
+  <div class="target-row">
+    <div class="target-card">
+      <div class="target-label">購入率（CVR）</div>
+      <div class="target-bar-wrap">
+        <div class="target-bar"><div class="target-fill good" style="width:80%"></div></div>
+        <div class="target-text" style="color: var(--green);">3.2%</div>
+      </div>
+      <div class="target-goal">撤退ライン 1% ／ 目標 2〜3%</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">設置率（購入者中）</div>
+      <div class="target-bar-wrap">
+        <div class="target-bar"><div class="target-fill good" style="width:64%"></div></div>
+        <div class="target-text" style="color: var(--green);">64%</div>
+      </div>
+      <div class="target-goal">撤退ライン 30% ／ 目標 40%以上</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">30日継続利用率</div>
+      <div class="target-bar-wrap">
+        <div class="target-bar"><div class="target-fill good" style="width:71%"></div></div>
+        <div class="target-text" style="color: var(--green);">71%</div>
+      </div>
+      <div class="target-goal">撤退ライン 40% ／ 目標 60%以上</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">再利用意向（アンケート）</div>
+      <div class="target-bar-wrap">
+        <div class="target-bar"><div class="target-fill warn" style="width:63%"></div></div>
+        <div class="target-text" style="color: var(--gold);">63%</div>
+      </div>
+      <div class="target-goal">撤退ライン 50% ／ 目標 60%以上</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="section-title">収益・ファン推移</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">月別GMV & 受取収益</div>
+          <div class="chart-card-sub">過去6ヶ月推移（単位：万円）</div>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab active">6ヶ月</button>
+          <button class="nav-tab">3ヶ月</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="revenueChart" height="240"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">ファン熱量スコア分布</div>
+          <div class="chart-card-sub">AIスコアリングによるファン層</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="display:flex; justify-content:center;">
+        <canvas id="fanTierChart" height="230" width="230"></canvas>
+      </div>
+      <div style="display:flex; gap:16px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;display:inline-block;"></span>ロイヤル (上位5%)</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#ec4899;display:inline-block;"></span>コア (上位20%)</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#06b6d4;display:inline-block;"></span>レギュラー</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#334155;display:inline-block;"></span>ライト</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div style="margin-top:16px;" class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">週別ギフト販売数</div>
+          <div class="chart-card-sub">今月4週間</div>
+        </div>
+      </div>
+      <canvas id="weeklyGiftChart" height="180"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">収益源の内訳</div>
+          <div class="chart-card-sub">ファン課金 vs 協賛ボーナス</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:center;">
+        <canvas id="revenueBreakChart" height="180" width="180"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">ファン継続率トレンド</div>
+          <div class="chart-card-sub">30日 & 60日継続率</div>
+        </div>
+      </div>
+      <canvas id="retentionChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Fans -->
+  <div class="section-title">トップサポーター ランキング</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">月間 上位サポーター</div>
+          <div class="chart-card-sub">AI熱量スコア上位 10名</div>
+        </div>
+        <span class="tag tag-purple">2026年8月</span>
+      </div>
+      <table class="fan-table">
+        <thead>
+          <tr>
+            <th>順位</th>
+            <th>ファンID</th>
+            <th>累計購入</th>
+            <th>熱量スコア</th>
+            <th>獲得ギフト</th>
+            <th>ステータス</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-badge rank-1">1</span></td>
+            <td><span class="fan-id">@hoshi_fan_2847</span></td>
+            <td>¥12,500</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:98%"></div></div><div class="score-val">98</div></div></td>
+            <td><span class="gift-badge">25 個</span></td>
+            <td><span class="tag tag-purple">ロイヤル</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-2">2</span></td>
+            <td><span class="fan-id">@yuki_support_11</span></td>
+            <td>¥9,000</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:91%"></div></div><div class="score-val">91</div></div></td>
+            <td><span class="gift-badge">18 個</span></td>
+            <td><span class="tag tag-purple">ロイヤル</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-3">3</span></td>
+            <td><span class="fan-id">@sakura_forever88</span></td>
+            <td>¥8,500</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:87%"></div></div><div class="score-val">87</div></div></td>
+            <td><span class="gift-badge">17 個</span></td>
+            <td><span class="tag tag-purple">ロイヤル</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">4</span></td>
+            <td><span class="fan-id">@moonlight_v3</span></td>
+            <td>¥6,000</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:79%"></div></div><div class="score-val">79</div></div></td>
+            <td><span class="gift-badge">12 個</span></td>
+            <td><span class="tag tag-gold">コア</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">5</span></td>
+            <td><span class="fan-id">@blue_whale_pom</span></td>
+            <td>¥5,500</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:74%"></div></div><div class="score-val">74</div></div></td>
+            <td><span class="gift-badge">11 個</span></td>
+            <td><span class="tag tag-gold">コア</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">6</span></td>
+            <td><span class="fan-id">@nana_chan_77</span></td>
+            <td>¥5,000</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:68%"></div></div><div class="score-val">68</div></div></td>
+            <td><span class="gift-badge">10 個</span></td>
+            <td><span class="tag tag-gold">コア</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">7</span></td>
+            <td><span class="fan-id">@pixel_dream_22</span></td>
+            <td>¥4,000</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:62%"></div></div><div class="score-val">62</div></div></td>
+            <td><span class="gift-badge">8 個</span></td>
+            <td><span class="tag tag-gold">コア</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">8</span></td>
+            <td><span class="fan-id">@cherry_blossom9</span></td>
+            <td>¥3,500</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:58%"></div></div><div class="score-val">58</div></div></td>
+            <td><span class="gift-badge">7 個</span></td>
+            <td><span class="tag tag-green">レギュラー</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">9</span></td>
+            <td><span class="fan-id">@stargazer_mx</span></td>
+            <td>¥3,000</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:51%"></div></div><div class="score-val">51</div></div></td>
+            <td><span class="gift-badge">6 個</span></td>
+            <td><span class="tag tag-green">レギュラー</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">10</span></td>
+            <td><span class="fan-id">@violet_spark_08</span></td>
+            <td>¥2,500</td>
+            <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:46%"></div></div><div class="score-val">46</div></div></td>
+            <td><span class="gift-badge">5 個</span></td>
+            <td><span class="tag tag-green">レギュラー</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">最新アクティビティ</div>
+          <div class="chart-card-sub">リアルタイム通知</div>
+        </div>
+      </div>
+      <div class="notif-list">
+        <div class="notif-item">
+          <div class="notif-dot purple"></div>
+          <div><div class="notif-text"><strong>@hoshi_fan_2847</strong> さんが「夏の特別ギフト🌸」を購入しました</div><div class="notif-time">2分前</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot gold"></div>
+          <div><div class="notif-text">スポンサー「アサヒ飲料」から協賛ボーナス <strong>¥18,000</strong> が入金されました</div><div class="notif-time">1時間前</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot pink"></div>
+          <div><div class="notif-text"><strong>@yuki_support_11</strong> さんが3ヶ月継続達成 🎉 ロイヤルファン昇格！</div><div class="notif-time">3時間前</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot cyan"></div>
+          <div><div class="notif-text">新規ファン <strong>15人</strong> が今日ウィジェットを設置しました</div><div class="notif-time">今日</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot purple"></div>
+          <div><div class="notif-text">AIが「夏限定メッセージ」を自動配信しました（対象: 1,498名）</div><div class="notif-time">昨日</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot gold"></div>
+          <div><div class="notif-text">月間GMV <strong>¥28万円</strong> 達成 – 先月比 +18% 🎊</div><div class="notif-time">8月31日</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot pink"></div>
+          <div><div class="notif-text">YouTube配信「夏イベント」の更新をウィジェットへ自動プッシュ完了</div><div class="notif-time">8月30日</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot cyan"></div>
+          <div><div class="notif-text">ファン満足度調査 <strong>68%</strong> が「再利用したい」と回答</div><div class="notif-time">8月28日</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Digital Gifts -->
+  <div class="section-title">デジタルギフト 管理</div>
+  <div class="gift-grid">
+    <div class="gift-item gift-active">
+      <div class="gift-emoji">🌸</div>
+      <div class="gift-name">夏の特別ギフト</div>
+      <div class="gift-count">208 個販売</div>
+      <div class="gift-rev">¥104,000</div>
+      <div style="margin-top:8px;"><span class="tag tag-purple">配信中</span></div>
+    </div>
+    <div class="gift-item gift-active">
+      <div class="gift-emoji">⭐</div>
+      <div class="gift-name">スターギフト</div>
+      <div class="gift-count">156 個販売</div>
+      <div class="gift-rev">¥78,000</div>
+      <div style="margin-top:8px;"><span class="tag tag-purple">配信中</span></div>
+    </div>
+    <div class="gift-item gift-active">
+      <div class="gift-emoji">🎨</div>
+      <div class="gift-name">アートコレクション</div>
+      <div class="gift-count">126 個販売</div>
+      <div class="gift-rev">¥63,000</div>
+      <div style="margin-top:8px;"><span class="tag tag-purple">配信中</span></div>
+    </div>
+    <div class="gift-item">
+      <div class="gift-emoji">🌟</div>
+      <div class="gift-name">限定応援ギフト</div>
+      <div class="gift-count">70 個販売</div>
+      <div class="gift-rev">¥35,000</div>
+      <div style="margin-top:8px;"><span class="tag tag-gold">終了</span></div>
+    </div>
+    <div class="gift-item">
+      <div style="font-size:32px; margin-bottom:8px; opacity:0.3;">＋</div>
+      <div class="gift-name" style="color:var(--muted);">新ギフトを追加</div>
+      <div class="gift-count">AI生成で簡単作成</div>
+      <div class="gift-rev" style="color:var(--muted);">¥ —</div>
+      <div style="margin-top:8px;"><span class="tag" style="background:rgba(255,255,255,0.05);color:var(--muted);">作成する</span></div>
+    </div>
+    <div class="chart-card" style="background:transparent; border:none; padding:0;">
+      <div style="padding:0;">
+        <div class="chart-card-title" style="margin-bottom:12px; font-size:13px;">AIメッセージ配信設定</div>
+        <div style="background:var(--surface); border-radius:10px; padding:14px; margin-bottom:10px;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">次回予定配信</div>
+          <div style="font-size:14px; font-weight:600;">2026/09/01 20:00</div>
+          <div style="font-size:12px; color:var(--accent1); margin-top:4px;">「夏ありがとうメッセージ」AI自動生成済</div>
+        </div>
+        <div style="background:var(--surface); border-radius:10px; padding:14px;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">対象ファン数</div>
+          <div style="font-size:14px; font-weight:600;">1,498 名</div>
+          <div style="font-size:12px; color:var(--green); margin-top:4px;">✓ 全員にパーソナライズ配信</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card" style="background:transparent; border:none; padding:0; grid-column: span 2;">
+      <div class="chart-card-title" style="margin-bottom:12px; font-size:13px;">来月の収益予測（AIシミュレーション）</div>
+      <canvas id="forecastChart" height="100"></canvas>
+    </div>
+  </div>
+
+  <div style="height:40px;"></div>
+</div>
+
+<script>
+const colors = {
+  purple: '#8b5cf6', pink: '#ec4899', cyan: '#06b6d4',
+  gold: '#f59e0b', green: '#10b981', muted: '#94a3b8', border: '#2a2a4a'
+};
+
+// Revenue Chart
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: ['3月', '4月', '5月', '6月', '7月', '8月'],
+    datasets: [
+      {
+        label: 'GMV (万円)',
+        data: [14.5, 17.2, 19.8, 22.1, 23.7, 28.0],
+        backgroundColor: 'rgba(139,92,246,0.25)',
+        borderColor: colors.purple,
+        borderWidth: 2,
+        borderRadius: 6,
+        order: 2
+      },
+      {
+        label: '受取収益 (万円)',
+        data: [9.8, 11.5, 13.2, 14.8, 16.0, 19.6],
+        type: 'line',
+        borderColor: colors.pink,
+        backgroundColor: 'rgba(236,72,153,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: colors.pink,
+        pointRadius: 4,
+        order: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: colors.muted, font: { size: 12 } } } },
+    scales: {
+      x: { ticks: { color: colors.muted }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: colors.muted, callback: v => '¥'+v+'万' }, grid: { color: colors.border } }
+    }
+  }
+});
+
+// Fan Tier Donut
+new Chart(document.getElementById('fanTierChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['ロイヤル (5%)', 'コア (18%)', 'レギュラー (41%)', 'ライト (36%)'],
+    datasets: [{
+      data: [117, 421, 960, 842],
+      backgroundColor: [colors.purple, colors.pink, colors.cyan, '#334155'],
+      borderColor: '#1a1a32', borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    cutout: '62%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}人` } }
+    }
+  }
+});
+
+// Weekly Gift Chart
+new Chart(document.getElementById('weeklyGiftChart'), {
+  type: 'bar',
+  data: {
+    labels: ['第1週', '第2週', '第3週', '第4週'],
+    datasets: [{
+      label: 'ギフト販売数',
+      data: [118, 142, 165, 135],
+      backgroundColor: [
+        'rgba(139,92,246,0.7)', 'rgba(139,92,246,0.8)',
+        'rgba(139,92,246,0.95)', 'rgba(139,92,246,0.6)'
+      ],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: colors.muted }, grid: { display: false } },
+      y: { ticks: { color: colors.muted }, grid: { color: colors.border } }
+    }
+  }
+});
+
+// Revenue Breakdown Donut
+new Chart(document.getElementById('revenueBreakChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['ファン課金還元', '協賛ボーナス'],
+    datasets: [{
+      data: [196800, 18000],
+      backgroundColor: [colors.purple, colors.gold],
+      borderColor: '#1a1a32', borderWidth: 3
+    }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: colors.muted, font: { size: 11 }, padding: 10 } },
+      tooltip: { callbacks: { label: ctx => ` ¥${ctx.parsed.toLocaleString()}` } }
+    }
+  }
+});
+
+// Retention Chart
+new Chart(document.getElementById('retentionChart'), {
+  type: 'line',
+  data: {
+    labels: ['3月', '4月', '5月', '6月', '7月', '8月'],
+    datasets: [
+      {
+        label: '30日継続率',
+        data: [58, 62, 65, 67, 69, 71],
+        borderColor: colors.green, backgroundColor: 'rgba(16,185,129,0.1)',
+        fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: colors.green
+      },
+      {
+        label: '60日継続率',
+        data: [42, 47, 51, 54, 56, 59],
+        borderColor: colors.cyan, backgroundColor: 'rgba(6,182,212,0.05)',
+        fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: colors.cyan
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: colors.muted, font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: colors.muted }, grid: { display: false } },
+      y: { ticks: { color: colors.muted, callback: v => v+'%' }, grid: { color: colors.border }, min: 30, max: 80 }
+    }
+  }
+});
+
+// Forecast Chart
+new Chart(document.getElementById('forecastChart'), {
+  type: 'line',
+  data: {
+    labels: ['実績(6月)', '実績(7月)', '実績(8月)', '予測(9月)', '予測(10月)', '予測(11月)'],
+    datasets: [{
+      label: 'GMV予測 (万円)',
+      data: [22.1, 23.7, 28.0, 30.5, 33.2, 36.0],
+      borderColor: colors.gold,
+      backgroundColor: 'rgba(245,158,11,0.08)',
+      fill: true, tension: 0.4, pointRadius: 5,
+      pointBackgroundColor: (ctx) => ctx.dataIndex >= 3 ? colors.gold : colors.purple,
+      segment: { borderDash: (ctx) => ctx.p0DataIndex >= 2 ? [6,3] : [] }
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: colors.muted }, grid: { display: false } },
+      y: { ticks: { color: colors.muted, callback: v => '¥'+v+'万' }, grid: { color: colors.border } }
+    }
+  }
+});
+</script>
+</body>
+</html>
