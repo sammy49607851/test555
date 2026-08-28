@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>応援ウィジェット｜アプリ画面モックアップ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080e1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    padding: 40px 20px;
+  }
+
+  .stage {
+    display: flex;
+    gap: 50px;
+    align-items: flex-start;
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  /* Left panel */
+  .stage-left { flex: 1; }
+  .stage-title { color: #64748b; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .stage-heading { color: #f1f5f9; font-size: 26px; font-weight: 900; line-height: 1.2; margin-top: 6px; }
+  .stage-sub { color: #64748b; font-size: 13px; line-height: 1.7; margin-top: 10px; max-width: 360px; }
+
+  .tab-nav {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 24px;
+  }
+  .tab-pill {
+    display: flex; align-items: center; gap: 10px;
+    background: #111827; border: 1.5px solid #1e293b;
+    border-radius: 12px; padding: 12px 14px;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+  }
+  .tab-pill:hover { border-color: #4f46e5; }
+  .tab-pill.active { border-color: #8b5cf6; background: rgba(139,92,246,0.12); }
+  .tab-pill-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+  .tab-pill-label { font-size: 13px; font-weight: 700; color: #e2e8f0; }
+  .tab-pill-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
+
+  .screen-desc {
+    margin-top: 24px;
+    background: #111827; border: 1px solid #1e293b; border-radius: 14px; padding: 18px;
+  }
+  .screen-desc-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+  .screen-desc-list { display: flex; flex-direction: column; gap: 8px; }
+  .sdl-item { display: flex; gap: 8px; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .sdl-dot { color: #8b5cf6; flex-shrink: 0; }
+
+  /* Phone */
+  .phone-wrap { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .phone {
+    width: 320px; height: 693px;
+    background: #111; border-radius: 50px;
+    border: 8px solid #2a2a2a;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 0 1px #444, 0 30px 80px rgba(0,0,0,0.8), inset 0 0 0 1px #333;
+  }
+  .phone-inner {
+    width: 100%; height: 100%;
+    background: #0d1117; border-radius: 42px;
+    overflow: hidden; position: relative; display: flex; flex-direction: column;
+  }
+
+  /* Dynamic island */
+  .di { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 116px; height: 34px; background: #000; border-radius: 20px; z-index: 100; }
+
+  /* Status bar */
+  .sbar {
+    height: 54px; flex-shrink: 0;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 22px 8px; color: #fff; font-size: 12px; font-weight: 600; position: relative; z-index: 10;
+  }
+  .sbar-time { font-size: 15px; font-weight: 700; }
+  .sbar-icons { display: flex; gap: 4px; align-items: center; }
+
+  /* Screen container */
+  .screen { flex: 1; overflow: hidden; position: relative; }
+  .screen-page {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    transition: opacity 0.25s, transform 0.25s;
+    opacity: 0; transform: translateX(20px); pointer-events: none;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .screen-page::-webkit-scrollbar { display: none; }
+  .screen-page.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+
+  /* Bottom tab bar */
+  .tab-bar {
+    height: 80px; flex-shrink: 0;
+    display: flex; align-items: flex-start; padding-top: 10px;
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    position: relative; z-index: 50;
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .tab-icon { font-size: 22px; line-height: 1; transition: transform 0.15s; }
+  .tab-label { font-size: 9px; color: #475569; font-weight: 600; }
+  .tab-item.active .tab-icon { transform: scale(1.15); }
+  .tab-item.active .tab-label { color: #8b5cf6; }
+  .tab-dot { width: 4px; height: 4px; border-radius: 50%; background: #8b5cf6; display: none; }
+  .tab-item.active .tab-dot { display: block; }
+
+  /* ===== SCREEN 1: ホーム ===== */
+  .home-header {
+    padding: 16px 16px 12px;
+    background: linear-gradient(180deg, #0d1117 60%, transparent);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .home-greeting { font-size: 11px; color: #64748b; font-weight: 600; }
+  .home-name { font-size: 18px; font-weight: 900; color: #f1f5f9; margin-top: 2px; }
+  .home-widget-mini {
+    margin: 0 16px 16px;
+    background: linear-gradient(135deg, rgba(88,28,135,0.7), rgba(30,27,75,0.8));
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 18px; padding: 14px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .hwm-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .hwm-text { flex: 1; }
+  .hwm-name { font-size: 11px; font-weight: 700; color: #c4b5fd; }
+  .hwm-msg { font-size: 12px; color: #e2e8f0; margin-top: 3px; line-height: 1.5; }
+  .hwm-cta {
+    background: rgba(139,92,246,0.8); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  .section-head { font-size: 13px; font-weight: 800; color: #e2e8f0; padding: 12px 16px 8px; }
+  .section-head span { color: #64748b; font-size: 11px; font-weight: 500; margin-left: 6px; }
+
+  /* Sponsor card */
+  .sponsor-card {
+    margin: 0 16px 16px;
+    background: #111827; border: 1px solid #1e293b; border-radius: 14px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+  }
+  .sponsor-icon { width: 40px; height: 40px; border-radius: 10px; background: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .sponsor-text { flex: 1; }
+  .sponsor-brand { font-size: 11px; color: #64748b; font-weight: 600; }
+  .sponsor-msg { font-size: 12px; color: #e2e8f0; margin-top: 2px; line-height: 1.4; }
+  .sponsor-badge { font-size: 10px; font-weight: 700; background: rgba(16,185,129,0.15); color: #10b981; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+
+  /* Activity */
+  .activity-card {
+    margin: 0 16px 10px;
+    background: #111827; border: 1px solid #1e293b; border-radius: 12px;
+    padding: 11px 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .act-icon { font-size: 18px; width: 36px; height: 36px; border-radius: 10px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .act-text { flex: 1; font-size: 12px; color: #94a3b8; line-height: 1.4; }
+  .act-text strong { color: #e2e8f0; }
+  .act-time { font-size: 10px; color: #475569; }
+
+  /* ===== SCREEN 2: 推し情報 ===== */
+  .oshi-header {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #1e293b;
+  }
+  .oshi-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#7c3aed,#ec4899); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .oshi-name-big { font-size: 15px; font-weight: 800; color: #f1f5f9; }
+  .oshi-sub { font-size: 11px; color: #64748b; }
+  .oshi-live { background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: auto; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .feed-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 16px;
+    overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .feed-tabs::-webkit-scrollbar { display: none; }
+  .feed-tab {
+    font-size: 12px; font-weight: 600; color: #475569;
+    padding: 10px 12px; border-bottom: 2px solid transparent; white-space: nowrap;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .feed-tab.active { color: #8b5cf6; border-bottom-color: #8b5cf6; }
+
+  .feed-item {
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; gap: 10px;
+  }
+  .feed-source {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .feed-body { flex: 1; }
+  .feed-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .feed-platform { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+  .fp-yt { background: rgba(255,0,0,0.15); color: #f87171; }
+  .fp-x { background: rgba(255,255,255,0.08); color: #94a3b8; }
+  .fp-cut { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .feed-time { font-size: 10px; color: #475569; }
+  .feed-title { font-size: 12px; color: #e2e8f0; line-height: 1.5; font-weight: 500; }
+  .feed-thumb {
+    width: 60px; height: 40px; border-radius: 6px; flex-shrink: 0;
+    background: linear-gradient(135deg, #1e1b4b, #312e81); display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+
+  /* ===== SCREEN 3: ギフト ===== */
+  .gift-header { padding: 16px; }
+  .gift-header-title { font-size: 18px; font-weight: 900; color: #f1f5f9; }
+  .gift-header-sub { font-size: 12px; color: #64748b; margin-top: 3px; }
+
+  .gift-creator-card {
+    margin: 0 16px 16px;
+    background: linear-gradient(135deg, rgba(88,28,135,0.6), rgba(30,27,75,0.7));
+    border: 1px solid rgba(139,92,246,0.3); border-radius: 16px;
+    padding: 14px; display: flex; gap: 12px; align-items: center;
+  }
+  .gcc-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#7c3aed,#ec4899); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .gcc-info { flex: 1; }
+  .gcc-name { font-size: 14px; font-weight: 800; color: #f1f5f9; }
+  .gcc-fans { font-size: 11px; color: #8b5cf6; margin-top: 2px; }
+  .gcc-revenue { font-size: 13px; font-weight: 700; color: #10b981; }
+
+  .gift-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 0 16px 16px;
+  }
+  .gift-card {
+    background: #111827; border: 1.5px solid #1e293b; border-radius: 14px;
+    padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .gift-card:hover, .gift-card.selected { border-color: #8b5cf6; background: rgba(139,92,246,0.08); }
+  .gift-card.current { border-color: #10b981; }
+  .gift-current-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: #10b981; color: #000; font-size: 9px; font-weight: 800;
+    padding: 2px 7px; border-radius: 8px;
+  }
+  .gift-card-emoji { font-size: 36px; margin-bottom: 6px; }
+  .gift-card-name { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+  .gift-card-price { font-size: 13px; font-weight: 800; color: #8b5cf6; margin-top: 4px; }
+  .gift-card-count { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+  .buy-bar {
+    background: rgba(10,14,26,0.95); border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .buy-info { flex: 1; }
+  .buy-name { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+  .buy-price { font-size: 14px; font-weight: 900; color: #8b5cf6; }
+  .buy-btn {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: #fff; font-size: 13px; font-weight: 800;
+    padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ===== SCREEN 4: コレクション ===== */
+  .coll-header { padding: 16px 16px 12px; }
+  .coll-stats { display: flex; gap: 8px; margin-top: 12px; }
+  .coll-stat { flex: 1; background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 10px; text-align: center; }
+  .coll-stat-val { font-size: 18px; font-weight: 900; color: #8b5cf6; }
+  .coll-stat-label { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+  .coll-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px 16px; }
+  .coll-item {
+    background: #111827; border: 1px solid #1e293b; border-radius: 14px;
+    padding: 12px 8px; text-align: center; position: relative;
+  }
+  .coll-item.special { border-color: #f59e0b; background: rgba(245,158,11,0.05); }
+  .coll-item-emoji { font-size: 30px; margin-bottom: 5px; }
+  .coll-item-name { font-size: 10px; font-weight: 700; color: #e2e8f0; line-height: 1.3; }
+  .coll-item-date { font-size: 9px; color: #475569; margin-top: 3px; }
+  .coll-item-rare { position: absolute; top: -5px; right: -5px; background: #f59e0b; color: #000; font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 6px; }
+
+  /* ===== SCREEN 5: ランキング ===== */
+  .rank-header { padding: 14px 16px; }
+  .rank-my-card {
+    margin: 0 16px 16px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+    border: 1px solid rgba(245,158,11,0.3); border-radius: 16px; padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .rmc-rank { font-size: 32px; font-weight: 900; color: #f59e0b; min-width: 48px; }
+  .rmc-info { flex: 1; }
+  .rmc-label { font-size: 11px; color: #64748b; }
+  .rmc-name { font-size: 14px; font-weight: 800; color: #f1f5f9; }
+  .rmc-points { font-size: 12px; color: #f59e0b; font-weight: 700; margin-top: 2px; }
+  .rmc-badge { background: #f59e0b; color: #000; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; }
+
+  .rank-item {
+    padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ri-rank { font-size: 14px; font-weight: 900; color: #475569; min-width: 24px; text-align: center; }
+  .ri-rank.gold { color: #f59e0b; }
+  .ri-rank.silver { color: #94a3b8; }
+  .ri-rank.bronze { color: #b45309; }
+  .ri-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#1e293b,#334155); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .ri-info { flex: 1; }
+  .ri-id { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+  .ri-sub { font-size: 10px; color: #64748b; margin-top: 1px; }
+  .ri-score { text-align: right; }
+  .ri-pts { font-size: 13px; font-weight: 800; color: #8b5cf6; }
+  .ri-gift { font-size: 10px; color: #64748b; }
+
+  .coupon-card {
+    margin: 0 16px 10px;
+    background: linear-gradient(135deg, #0c2a1f, #111827);
+    border: 1px solid rgba(16,185,129,0.3); border-radius: 14px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+  }
+  .cc-icon { font-size: 28px; }
+  .cc-info { flex: 1; }
+  .cc-brand { font-size: 11px; color: #10b981; font-weight: 700; }
+  .cc-title { font-size: 13px; font-weight: 800; color: #f1f5f9; margin-top: 2px; }
+  .cc-exp { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .cc-use { background: rgba(16,185,129,0.8); color: #000; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 10px; white-space: nowrap; }
+
+  .tag-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .tag-purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .tag-green { background: rgba(16,185,129,0.15); color: #34d399; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- Left: screen selector -->
+  <div class="stage-left">
+    <div>
+      <div class="stage-title">応援ウィジェット</div>
+      <div class="stage-heading">アプリ画面<br>モックアップ</div>
+      <div class="stage-sub">ウィジェットを補完するメインアプリ。ホーム・推し情報・ギフト購入・コレクション・ランキングの5画面を搭載。</div>
+    </div>
+
+    <div class="tab-nav" style="margin-top:24px;">
+      <div class="tab-pill active" onclick="switchScreen(0,this)">
+        <div class="tab-pill-icon">🏠</div>
+        <div><div class="tab-pill-label">ホーム</div><div class="tab-pill-sub">スポンサー・活動まとめ</div></div>
+      </div>
+      <div class="tab-pill" onclick="switchScreen(1,this)">
+        <div class="tab-pill-icon">⭐</div>
+        <div><div class="tab-pill-label">推し情報</div><div class="tab-pill-sub">SNS横断フィード</div></div>
+      </div>
+      <div class="tab-pill" onclick="switchScreen(2,this)">
+        <div class="tab-pill-icon">🎁</div>
+        <div><div class="tab-pill-label">ギフト購入</div><div class="tab-pill-sub">デジタルギフト ¥500</div></div>
+      </div>
+      <div class="tab-pill" onclick="switchScreen(3,this)">
+        <div class="tab-pill-icon">🗂</div>
+        <div><div class="tab-pill-label">コレクション</div><div class="tab-pill-sub">応援の証を飾る</div></div>
+      </div>
+      <div class="tab-pill" onclick="switchScreen(4,this)">
+        <div class="tab-pill-icon">🏆</div>
+        <div><div class="tab-pill-label">ランキング</div><div class="tab-pill-sub">応援ランク・クーポン</div></div>
+      </div>
+    </div>
+
+    <div class="screen-desc">
+      <div class="screen-desc-title" id="descTitle">ホーム画面</div>
+      <div class="screen-desc-list" id="descList">
+        <div class="sdl-item"><span class="sdl-dot">◆</span>ウィジェットのメッセージをアプリ内でも確認</div>
+        <div class="sdl-item"><span class="sdl-dot">◆</span>協賛企業からのクーポン・特典を受け取る</div>
+        <div class="sdl-item"><span class="sdl-dot">◆</span>最新のファン活動・応援ランキングをチェック</div>
+        <div class="sdl-item"><span class="sdl-dot">◆</span>スポンサーのトライアルオファーで「お得な応援」体験</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone-wrap">
+    <div style="font-size:11px;color:#475569;font-weight:600;letter-spacing:1px;">アプリ画面 (iPhone)</div>
+    <div class="phone">
+      <div class="phone-inner">
+        <div class="di"></div>
+
+        <!-- Status bar -->
+        <div class="sbar">
+          <div class="sbar-time">9:41</div>
+          <div class="sbar-icons">
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0.5" width="3" height="11.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity="0.3"/></svg>
+            <svg width="15" height="12" viewBox="0 0 15 12" fill="white"><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7.1L12.6 5.8C11.2 4.4 9.4 3.5 7.5 3.5C5.6 3.5 3.8 4.4 2.4 5.8L3.7 7.1C4.7 6.1 6 5.5 7.5 5.5Z"/><circle cx="7.5" cy="11" r="1.5"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="white"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-width="1" fill="none"/><rect x="23" y="4" width="2" height="4" rx="1"/><rect x="1.5" y="2.5" width="16" height="7" rx="1.5"/></svg>
+          </div>
+        </div>
+
+        <!-- Screen area -->
+        <div class="screen">
+
+          <!-- Screen 0: ホーム -->
+          <div class="screen-page active" id="screen-0">
+            <div class="home-header">
+              <div class="home-greeting">おかえり 👋</div>
+              <div class="home-name">@hoshi_fan_2847</div>
+            </div>
+            <div class="home-widget-mini">
+              <div class="hwm-avatar">🌸</div>
+              <div class="hwm-text">
+                <div class="hwm-name">Sakura Bloom より</div>
+                <div class="hwm-msg">今日も応援ありがとう！新しいギフト出たよ✨</div>
+              </div>
+              <div class="hwm-cta">確認</div>
+            </div>
+
+            <div class="section-head">スポンサーからのオファー</div>
+            <div class="sponsor-card">
+              <div class="sponsor-icon">🥤</div>
+              <div class="sponsor-text">
+                <div class="sponsor-brand">アサヒ飲料 × Sakura Bloom</div>
+                <div class="sponsor-msg">「三ツ矢サイダー」初回無料トライアル！応援ポイント2倍</div>
+              </div>
+              <div class="sponsor-badge">0円</div>
+            </div>
+            <div class="sponsor-card">
+              <div class="sponsor-icon">💄</div>
+              <div class="sponsor-text">
+                <div class="sponsor-brand">資生堂 × Sakura Bloom</div>
+                <div class="sponsor-msg">新作コスメ 30%OFFクーポン配布中</div>
+              </div>
+              <div class="sponsor-badge">期間限定</div>
+            </div>
+
+            <div class="section-head">最近の活動 <span>今日</span></div>
+            <div class="activity-card">
+              <div class="act-icon">🎁</div>
+              <div class="act-text"><strong>夏の特別ギフト🌸</strong> をコレクションに追加しました</div>
+              <div class="act-time">2時間前</div>
+            </div>
+            <div class="activity-card">
+              <div class="act-icon">🏆</div>
+              <div class="act-text">月間ランキング <strong>4位</strong> にランクアップ！</div>
+              <div class="act-time">昨日</div>
+            </div>
+            <div class="activity-card">
+              <div class="act-icon">💌</div>
+              <div class="act-text"><strong>Sakura Bloom</strong> からパーソナルメッセージが届きました</div>
+              <div class="act-time">3日前</div>
+            </div>
+            <div class="activity-card">
+              <div class="act-icon">⭐</div>
+              <div class="act-text">応援ランクが <strong>Silver → Gold</strong> にアップグレード</div>
+              <div class="act-time">先週</div>
+            </div>
+            <div style="height:20px;"></div>
+          </div>
+
+          <!-- Screen 1: 推し情報 -->
+          <div class="screen-page" id="screen-1">
+            <div class="oshi-header">
+              <div class="oshi-avatar">🌸</div>
+              <div>
+                <div class="oshi-name-big">Sakura Bloom</div>
+                <div class="oshi-sub">VTuber・イラストレーター</div>
+              </div>
+              <div class="oshi-live">LIVE</div>
+            </div>
+            <div class="feed-tabs">
+              <div class="feed-tab active">すべて</div>
+              <div class="feed-tab">YouTube</div>
+              <div class="feed-tab">X / SNS</div>
+              <div class="feed-tab">切り抜き</div>
+              <div class="feed-tab">メディア</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(255,0,0,0.15)">▶</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-yt">YouTube</span><span class="feed-time">配信中</span></div>
+                <div class="feed-title">【夏の思い出雑談】みんなと過ごした夏🌻 リアルタイム配信中！</div>
+              </div>
+              <div class="feed-thumb">🎙</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(255,255,255,0.06)">𝕏</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-x">X</span><span class="feed-time">1時間前</span></div>
+                <div class="feed-title">今夜21時から配信します！新しいイラストも見せるね🎨</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(139,92,246,0.15)">✂️</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-cut">切り抜き</span><span class="feed-time">3時間前</span></div>
+                <div class="feed-title">【感動】サクラが初めて100万再生達成した瞬間の反応</div>
+              </div>
+              <div class="feed-thumb">🏆</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(255,0,0,0.15)">▶</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-yt">YouTube</span><span class="feed-time">昨日</span></div>
+                <div class="feed-title">【新曲MV】「星降る夜に」Music Video 公開！</div>
+              </div>
+              <div class="feed-thumb">🎵</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(255,255,255,0.06)">𝕏</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-x">X</span><span class="feed-time">2日前</span></div>
+                <div class="feed-title">ファンのみんな、いつもありがとう💕 来週は特別イベントを予定してます</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-source" style="background:rgba(139,92,246,0.15)">✂️</div>
+              <div class="feed-body">
+                <div class="feed-meta"><span class="feed-platform fp-cut">切り抜き</span><span class="feed-time">3日前</span></div>
+                <div class="feed-title">サクラちゃんのゲーム実況が面白すぎてファンが増加中！</div>
+              </div>
+              <div class="feed-thumb">🎮</div>
+            </div>
+            <div style="height:20px;"></div>
+          </div>
+
+          <!-- Screen 2: ギフト購入 -->
+          <div class="screen-page" id="screen-2">
+            <div class="gift-header">
+              <div class="gift-header-title">デジタルギフト</div>
+              <div class="gift-header-sub">応援が「消えない証」になる</div>
+            </div>
+            <div class="gift-creator-card">
+              <div class="gcc-avatar">🌸</div>
+              <div class="gcc-info">
+                <div class="gcc-name">Sakura Bloom</div>
+                <div class="gcc-fans">2,340人が応援中</div>
+              </div>
+              <div class="gcc-revenue">¥280万 / 月</div>
+            </div>
+            <div style="font-size:11px;color:#64748b;font-weight:700;padding:0 16px 10px;">今月のギフト <span style="color:#e2e8f0;">4点</span></div>
+            <div class="gift-grid">
+              <div class="gift-card current selected" id="gcard-0" onclick="selectGift(0,'夏の特別ギフト🌸','¥500')">
+                <div class="gift-current-badge">配信中</div>
+                <div class="gift-card-emoji">🌸</div>
+                <div class="gift-card-name">夏の特別ギフト</div>
+                <div class="gift-card-price">¥500</div>
+                <div class="gift-card-count">208人が購入済</div>
+              </div>
+              <div class="gift-card" id="gcard-1" onclick="selectGift(1,'スターギフト⭐','¥500')">
+                <div class="gift-card-emoji">⭐</div>
+                <div class="gift-card-name">スターギフト</div>
+                <div class="gift-card-price">¥500</div>
+                <div class="gift-card-count">156人が購入済</div>
+              </div>
+              <div class="gift-card" id="gcard-2" onclick="selectGift(2,'アートコレクション🎨','¥500')">
+                <div class="gift-card-emoji">🎨</div>
+                <div class="gift-card-name">アートコレクション</div>
+                <div class="gift-card-price">¥500</div>
+                <div class="gift-card-count">126人が購入済</div>
+              </div>
+              <div class="gift-card" id="gcard-3" onclick="selectGift(3,'ムーンギフト🌙','¥500')">
+                <div class="gift-card-emoji">🌙</div>
+                <div class="gift-card-name">ムーンギフト</div>
+                <div class="gift-card-price">¥500</div>
+                <div class="gift-card-count">90人が購入済</div>
+              </div>
+            </div>
+            <div style="padding:0 16px 8px;font-size:11px;color:#64748b;line-height:1.6;">
+              ✓ クリエイター還元: <strong style="color:#10b981;">約70%（¥350）</strong> が直接届きます<br>
+              ✓ ウィジェット上でコレクション表示・ホーム画面に常時展示
+            </div>
+            <div style="height:60px;"></div>
+            <!-- Buy bar -->
+            <div class="buy-bar" style="position:sticky;bottom:0;">
+              <div class="buy-info">
+                <div class="buy-name" id="buyName">夏の特別ギフト🌸</div>
+                <div class="buy-price" id="buyPrice">¥500</div>
+              </div>
+              <button class="buy-btn" onclick="showBuySuccess()">応援する 💫</button>
+            </div>
+          </div>
+
+          <!-- Screen 3: コレクション -->
+          <div class="screen-page" id="screen-3">
+            <div class="coll-header">
+              <div style="font-size:18px;font-weight:900;color:#f1f5f9;">コレクション</div>
+              <div style="font-size:12px;color:#64748b;margin-top:3px;">応援の証 — ホーム画面ウィジェットで展示中</div>
+              <div class="coll-stats">
+                <div class="coll-stat"><div class="coll-stat-val">12</div><div class="coll-stat-label">所持ギフト</div></div>
+                <div class="coll-stat"><div class="coll-stat-val">¥6,000</div><div class="coll-stat-label">累計応援額</div></div>
+                <div class="coll-stat"><div class="coll-stat-val">4位</div><div class="coll-stat-label">ランキング</div></div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:#64748b;font-weight:700;padding:4px 16px 10px;">Sakura Bloom <span style="color:#8b5cf6;margin-left:4px;">フォロー中 ⭐</span></div>
+            <div class="coll-grid">
+              <div class="coll-item special">
+                <div class="coll-item-rare">RARE</div>
+                <div class="coll-item-emoji">🌸</div>
+                <div class="coll-item-name">夏の特別ギフト</div>
+                <div class="coll-item-date">8/28</div>
+              </div>
+              <div class="coll-item special">
+                <div class="coll-item-rare">RARE</div>
+                <div class="coll-item-emoji">⭐</div>
+                <div class="coll-item-name">スター&nbsp;ギフト</div>
+                <div class="coll-item-date">8/14</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🎨</div>
+                <div class="coll-item-name">アートコレクション</div>
+                <div class="coll-item-date">8/01</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🌙</div>
+                <div class="coll-item-name">ムーンギフト</div>
+                <div class="coll-item-date">7/25</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🎵</div>
+                <div class="coll-item-name">夏曲ギフト</div>
+                <div class="coll-item-date">7/15</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🌻</div>
+                <div class="coll-item-name">ひまわりギフト</div>
+                <div class="coll-item-date">7/01</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🎮</div>
+                <div class="coll-item-name">ゲーミングギフト</div>
+                <div class="coll-item-date">6/18</div>
+              </div>
+              <div class="coll-item">
+                <div class="coll-item-emoji">🦋</div>
+                <div class="coll-item-name">バタフライギフト</div>
+                <div class="coll-item-date">6/05</div>
+              </div>
+              <div class="coll-item" style="border-style:dashed;display:flex;align-items:center;justify-content:center;color:#475569;">
+                <div style="text-align:center;font-size:11px;">次のギフト<br>9/1配信予定</div>
+              </div>
+            </div>
+            <div style="height:20px;"></div>
+          </div>
+
+          <!-- Screen 4: ランキング -->
+          <div class="screen-page" id="screen-4">
+            <div class="rank-header">
+              <div style="font-size:18px;font-weight:900;color:#f1f5f9;">応援ランキング</div>
+              <div style="font-size:12px;color:#64748b;margin-top:3px;">Sakura Bloom 月間ランキング · 2026年8月</div>
+            </div>
+            <div class="rank-my-card">
+              <div class="rmc-rank">#4</div>
+              <div class="rmc-info">
+                <div class="rmc-label">あなたの現在順位</div>
+                <div class="rmc-name">@hoshi_fan_2847</div>
+                <div class="rmc-points">応援スコア: 79pt · ¥6,000 累計</div>
+              </div>
+              <div class="rmc-badge">Silver</div>
+            </div>
+
+            <div style="padding:8px 16px;font-size:11px;color:#64748b;font-weight:700;">クーポン特典 (Silver以上)</div>
+            <div class="coupon-card">
+              <div class="cc-icon">🥤</div>
+              <div class="cc-info">
+                <div class="cc-brand">アサヒ飲料 協賛</div>
+                <div class="cc-title">三ツ矢サイダー 1本無料</div>
+                <div class="cc-exp">期限: 9/30 まで</div>
+              </div>
+              <div class="cc-use">使う</div>
+            </div>
+            <div class="coupon-card">
+              <div class="cc-icon">💄</div>
+              <div class="cc-info">
+                <div class="cc-brand">資生堂 協賛</div>
+                <div class="cc-title">新作コスメ 30% OFF</div>
+                <div class="cc-exp">期限: 9/15 まで</div>
+              </div>
+              <div class="cc-use">使う</div>
+            </div>
+
+            <div style="padding:8px 16px 6px;font-size:11px;color:#64748b;font-weight:700;">月間トップランキング</div>
+            <div class="rank-item">
+              <div class="ri-rank gold">1</div>
+              <div class="ri-avatar">🌟</div>
+              <div class="ri-info"><div class="ri-id">@hoshi_fan_2847_top</div><div class="ri-sub">連続3ヶ月1位 · Gold会員</div></div>
+              <div class="ri-score"><div class="ri-pts">98pt</div><div class="ri-gift">25個</div></div>
+            </div>
+            <div class="rank-item">
+              <div class="ri-rank silver">2</div>
+              <div class="ri-avatar">⭐</div>
+              <div class="ri-info"><div class="ri-id">@yuki_support_11</div><div class="ri-sub">Gold会員</div></div>
+              <div class="ri-score"><div class="ri-pts">91pt</div><div class="ri-gift">18個</div></div>
+            </div>
+            <div class="rank-item">
+              <div class="ri-rank bronze">3</div>
+              <div class="ri-avatar">🎨</div>
+              <div class="ri-info"><div class="ri-id">@sakura_forever88</div><div class="ri-sub">Gold会員</div></div>
+              <div class="ri-score"><div class="ri-pts">87pt</div><div class="ri-gift">17個</div></div>
+            </div>
+            <div class="rank-item" style="background:rgba(245,158,11,0.05);">
+              <div class="ri-rank" style="color:#f59e0b;font-weight:900;">4</div>
+              <div class="ri-avatar" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">😊</div>
+              <div class="ri-info"><div class="ri-id" style="color:#8b5cf6;">@hoshi_fan_2847 <span style="font-size:9px;color:#f59e0b;">YOU</span></div><div class="ri-sub">Silver会員</div></div>
+              <div class="ri-score"><div class="ri-pts">79pt</div><div class="ri-gift">12個</div></div>
+            </div>
+            <div class="rank-item">
+              <div class="ri-rank">5</div>
+              <div class="ri-avatar">🌙</div>
+              <div class="ri-info"><div class="ri-id">@moonlight_v3</div><div class="ri-sub">Silver会員</div></div>
+              <div class="ri-score"><div class="ri-pts">74pt</div><div class="ri-gift">11個</div></div>
+            </div>
+            <div class="rank-item">
+              <div class="ri-rank">6</div>
+              <div class="ri-avatar">🌺</div>
+              <div class="ri-info"><div class="ri-id">@nana_chan_77</div><div class="ri-sub">Silver会員</div></div>
+              <div class="ri-score"><div class="ri-pts">68pt</div><div class="ri-gift">10個</div></div>
+            </div>
+            <div style="height:20px;"></div>
+          </div>
+
+        </div>
+
+        <!-- Bottom tab bar -->
+        <div class="tab-bar">
+          <div class="tab-item active" onclick="switchScreen(0,null,this)">
+            <div class="tab-icon">🏠</div>
+            <div class="tab-dot"></div>
+            <div class="tab-label">ホーム</div>
+          </div>
+          <div class="tab-item" onclick="switchScreen(1,null,this)">
+            <div class="tab-icon">⭐</div>
+            <div class="tab-dot"></div>
+            <div class="tab-label">推し情報</div>
+          </div>
+          <div class="tab-item" onclick="switchScreen(2,null,this)">
+            <div class="tab-icon">🎁</div>
+            <div class="tab-dot"></div>
+            <div class="tab-label">ギフト</div>
+          </div>
+          <div class="tab-item" onclick="switchScreen(3,null,this)">
+            <div class="tab-icon">🗂</div>
+            <div class="tab-dot"></div>
+            <div class="tab-label">コレクション</div>
+          </div>
+          <div class="tab-item" onclick="switchScreen(4,null,this)">
+            <div class="tab-icon">🏆</div>
+            <div class="tab-dot"></div>
+            <div class="tab-label">ランキング</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div style="font-size:12px;color:#475569;text-align:center;">← タブで画面切替 / 左パネルからも選択可</div>
+  </div>
+</div>
+
+<script>
+const descs = [
+  {
+    title: 'ホーム画面',
+    items: [
+      'ウィジェットのメッセージをアプリ内でも確認',
+      '協賛企業からのクーポン・特典を受け取る',
+      '最新のファン活動・応援ランキングをチェック',
+      'スポンサーのトライアルオファーで「お得な応援」体験'
+    ]
+  },
+  {
+    title: '推し情報フィード',
+    items: [
+      'YouTube・X・切り抜き・メディアを一元集約表示',
+      '情報を「探す疲れ」をゼロに — 届けるフィード型',
+      'アルゴリズムに埋もれない確実な情報接触',
+      'LIVE配信中はリアルタイムで最上部に表示'
+    ]
+  },
+  {
+    title: 'デジタルギフト購入',
+    items: [
+      '1回¥500からのスポット課金でライト層も参入しやすい',
+      '購入ギフトはウィジェット・コレクション画面に永久保存',
+      'クリエイター還元は約70%（¥350/ギフト）が直接届く',
+      '生成AIが即時にリアクション画像・メッセージを作成'
+    ]
+  },
+  {
+    title: 'コレクション',
+    items: [
+      '購入したデジタルギフトを「応援の証」として一覧表示',
+      'ホーム画面ウィジェットで常時展示 — 誇りの可視化',
+      'レアギフトはRAREバッジで特別感を演出',
+      '次回ギフトの配信予定日も事前告知で期待感を醸成'
+    ]
+  },
+  {
+    title: 'ランキング & クーポン',
+    items: [
+      '応援スコアで順位が決まり、上位ランクはクーポン特典',
+      '協賛企業のクーポンを「応援するとお得」へ変換',
+      '課金へのハードルを下げる正の循環設計',
+      'ランクアップで継続課金・再課金の強い動機に'
+    ]
+  }
+];
+
+let currentTab = null;
+const tabItems = document.querySelectorAll('.tab-item');
+
+function switchScreen(idx, leftBtn, tabBtn) {
+  // Screens
+  document.querySelectorAll('.screen-page').forEach((s,i) => {
+    s.classList.toggle('active', i === idx);
+  });
+  // Left nav pills
+  if (leftBtn) {
+    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+    leftBtn.classList.add('active');
+  }
+  // Phone tab bar
+  tabItems.forEach((t,i) => t.classList.toggle('active', i === idx));
+  // Desc update
+  document.getElementById('descTitle').textContent = descs[idx].title;
+  document.getElementById('descList').innerHTML = descs[idx].items.map(
+    i => `<div class="sdl-item"><span class="sdl-dot">◆</span>${i}</div>`
+  ).join('');
+}
+
+// Gift selection
+function selectGift(idx, name, price) {
+  document.querySelectorAll('.gift-card').forEach((c,i) => {
+    c.classList.toggle('selected', i === idx);
+  });
+  document.getElementById('buyName').textContent = name;
+  document.getElementById('buyPrice').textContent = price;
+}
+
+// Buy success flash
+function showBuySuccess() {
+  const btn = document.querySelector('.buy-btn');
+  btn.textContent = '購入完了 🎉';
+  btn.style.background = 'linear-gradient(135deg,#10b981,#34d399)';
+  setTimeout(() => {
+    btn.textContent = '応援する 💫';
+    btn.style.background = '';
+  }, 2000);
+}
+</script>
+</body>
+</html>

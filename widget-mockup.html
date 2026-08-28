@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>応援ウィジェット｜ウィジェット画面モックアップ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a14;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    padding: 40px 20px;
+  }
+
+  /* Stage layout */
+  .stage {
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+    max-width: 1100px;
+    width: 100%;
+  }
+  .stage-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .stage-title {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .stage-heading {
+    color: #f1f5f9;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .stage-sub {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 380px;
+  }
+
+  /* State selector */
+  .state-selector { display: flex; flex-direction: column; gap: 10px; }
+  .state-btn {
+    display: flex; align-items: center; gap: 14px;
+    background: #111827; border: 1.5px solid #1e293b;
+    border-radius: 14px; padding: 14px 18px;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+  }
+  .state-btn:hover { border-color: #4f46e5; background: #13182d; }
+  .state-btn.active { border-color: #8b5cf6; background: rgba(139,92,246,0.1); }
+  .state-icon { font-size: 24px; width: 40px; text-align: center; flex-shrink: 0; }
+  .state-label { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+  .state-desc { font-size: 12px; color: #64748b; margin-top: 2px; line-height: 1.4; }
+
+  /* Feature list */
+  .feature-list { display: flex; flex-direction: column; gap: 10px; }
+  .feature-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; color: #94a3b8; line-height: 1.5;
+  }
+  .feature-dot { color: #8b5cf6; font-size: 16px; margin-top: -1px; flex-shrink: 0; }
+
+  /* Phone frame */
+  .phone-wrap {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .phone {
+    width: 320px;
+    height: 693px;
+    background: #111;
+    border-radius: 50px;
+    border: 8px solid #2a2a2a;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px #444, 0 30px 80px rgba(0,0,0,0.8), inset 0 0 0 1px #333;
+  }
+  .phone-inner {
+    width: 100%; height: 100%;
+    background: #000;
+    border-radius: 42px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Dynamic island */
+  .dynamic-island {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    width: 116px; height: 34px;
+    background: #000; border-radius: 20px;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+  }
+  .dynamic-island.live {
+    width: 200px;
+    background: #1a0000;
+    box-shadow: 0 0 12px rgba(239,68,68,0.4);
+  }
+  .di-camera { width: 10px; height: 10px; border-radius: 50%; background: #222; }
+  .di-live-text { font-size: 10px; font-weight: 800; color: #ef4444; letter-spacing: 1px; display: none; }
+  .di-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; display: none; animation: blink 1s infinite; }
+  .dynamic-island.live .di-live-text,
+  .dynamic-island.live .di-live-dot { display: block; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 54px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 24px 8px;
+    z-index: 90;
+    color: #fff; font-size: 12px; font-weight: 600;
+  }
+  .status-time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 4px; align-items: center; }
+
+  /* Wallpaper */
+  .wallpaper {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #0f0524 0%, #0a0f1e 40%, #050b14 100%);
+  }
+  .wallpaper::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(88,28,135,0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(30,27,75,0.3) 0%, transparent 50%);
+  }
+  /* Stars */
+  .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) infinite var(--delay,0s); }
+  @keyframes twinkle { 0%,100%{opacity:var(--op,0.4)} 50%{opacity:0.1} }
+
+  /* Widget */
+  .widget {
+    position: absolute;
+    top: 70px; left: 14px; right: 14px;
+    height: 154px;
+    border-radius: 22px;
+    overflow: hidden;
+    z-index: 10;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .widget-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(88,28,135,0.85) 0%, rgba(30,27,75,0.9) 100%);
+    border: 1px solid rgba(139,92,246,0.4);
+  }
+  .widget-content {
+    position: relative; z-index: 1;
+    height: 100%; padding: 14px 16px;
+    display: flex; gap: 12px;
+  }
+  /* Creator avatar area */
+  .widget-avatar-wrap {
+    width: 120px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .widget-avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    position: relative;
+    border: 3px solid rgba(255,255,255,0.3);
+    transition: all 0.5s ease;
+  }
+  .widget-avatar-glow {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%);
+    animation: glowPulse 2s infinite;
+  }
+  @keyframes glowPulse { 0%,100%{opacity:0.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.05)} }
+  .widget-live-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #ef4444; color: #fff;
+    font-size: 9px; font-weight: 800;
+    padding: 2px 6px; border-radius: 8px;
+    letter-spacing: 0.5px;
+    animation: blink 1s infinite;
+    display: none;
+  }
+  .widget-avatar-name {
+    font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 600; margin-top: 6px; text-align: center;
+  }
+  /* Widget right */
+  .widget-right {
+    flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .widget-tag {
+    font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .widget-tag::before { content: ''; width: 16px; height: 1px; background: rgba(255,255,255,0.3); }
+  .widget-message {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 12px; color: #fff; line-height: 1.5;
+    border-left: 2px solid rgba(236,72,153,0.8);
+    min-height: 52px;
+    transition: all 0.4s ease;
+  }
+  .widget-meta {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .widget-gift-count {
+    font-size: 10px; color: rgba(255,255,255,0.6);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .widget-rank {
+    font-size: 10px; color: #f59e0b; font-weight: 700;
+    display: flex; align-items: center; gap: 3px;
+  }
+  /* Widget shimmer on message */
+  .widget-message.new { animation: msgFlash 0.5s ease; }
+  @keyframes msgFlash { 0%{background:rgba(236,72,153,0.3)} 100%{background:rgba(255,255,255,0.1)} }
+
+  /* App icons grid */
+  .apps-section {
+    position: absolute;
+    top: 238px; left: 14px; right: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 8px;
+    z-index: 10;
+  }
+  .app-icon {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+  .app-icon-img {
+    width: 58px; height: 58px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    position: relative;
+  }
+  .app-icon-label { font-size: 10px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; }
+  .app-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #ef4444; color: #fff;
+    font-size: 9px; font-weight: 800;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  }
+
+  /* Dock */
+  .dock {
+    position: absolute; bottom: 20px; left: 24px; right: 24px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 12px 16px;
+    display: flex; justify-content: space-around;
+    z-index: 10;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .dock-icon {
+    width: 54px; height: 54px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  }
+
+  /* Notification banner */
+  .notification {
+    position: absolute; top: 62px; left: 10px; right: 10px;
+    background: rgba(20,20,30,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+    z-index: 200;
+    border: 1px solid rgba(255,255,255,0.1);
+    transform: translateY(-120px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .notification.show { transform: translateY(0); }
+  .notif-app-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .notif-body { flex: 1; }
+  .notif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .notif-app { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; }
+  .notif-time { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .notif-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .notif-text { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; line-height: 1.4; }
+
+  /* Widget states */
+  .gift-effect {
+    position: absolute; inset: 0; z-index: 50; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .gift-effect.show { opacity: 1; }
+  .gift-emoji { font-size: 60px; animation: giftPop 0.8s ease forwards; }
+  @keyframes giftPop { 0%{transform:scale(0) rotate(-20deg);opacity:0} 60%{transform:scale(1.2) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:0} }
+
+  /* Side label */
+  .side-note {
+    position: absolute;
+    right: -120px; top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 4px; width: 110px;
+  }
+  .side-note-item { font-size: 11px; color: #64748b; line-height: 1.4; }
+  .side-arrow { color: #8b5cf6; }
+
+  /* App icons colors */
+  .ic-youtube { background: #ff0000; }
+  .ic-x { background: #000; border: 1px solid #333; }
+  .ic-line { background: #00b900; }
+  .ic-tiktok { background: #000; }
+  .ic-insta { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+  .ic-fanbox { background: #0a61ae; }
+  .ic-ouen { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+  .ic-settings { background: #636366; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <!-- Left panel -->
+  <div class="stage-left">
+    <div>
+      <div class="stage-title">応援ウィジェット</div>
+      <div class="stage-heading">ホーム画面で<br>"推し"と常時接続</div>
+      <div class="stage-sub" style="margin-top:12px;">スマホのホーム画面に「お守り」のように常駐。推しのリアルタイムメッセージ・配信通知・デジタルギフトをウィジェット上で体験できる。</div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">ウィジェット状態を切替</div>
+      <div class="state-selector">
+        <div class="state-btn active" onclick="setState('normal',this)">
+          <div class="state-icon">⭐</div>
+          <div>
+            <div class="state-label">通常モード</div>
+            <div class="state-desc">推しのキャラクターが表示。朝・夜で絵柄が変化。応援メッセージをストック</div>
+          </div>
+        </div>
+        <div class="state-btn" onclick="setState('live',this)">
+          <div class="state-icon">🔴</div>
+          <div>
+            <div class="state-label">LIVE 配信中</div>
+            <div class="state-desc">配信開始を即通知。ダイナミックアイランドが光り、タップで直接視聴へ</div>
+          </div>
+        </div>
+        <div class="state-btn" onclick="setState('message',this)">
+          <div class="state-icon">💌</div>
+          <div>
+            <div class="state-label">新着メッセージ</div>
+            <div class="state-desc">AIが生成したパーソナルメッセージが届く。ファン一人ひとりに最適化</div>
+          </div>
+        </div>
+        <div class="state-btn" onclick="setState('gift',this)">
+          <div class="state-icon">🎁</div>
+          <div>
+            <div class="state-label">ギフト受取エフェクト</div>
+            <div class="state-desc">デジタルギフト購入後にアニメーション演出。コレクションに追加される</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">ウィジェットの特長</div>
+      <div class="feature-list">
+        <div class="feature-item"><span class="feature-dot">◆</span>SNSタイムラインと違い、アルゴリズムに埋もれない "Always On" 接点</div>
+        <div class="feature-item"><span class="feature-dot">◆</span>時間帯・イベントで絵柄が自動切替（朝・夜・配信日）</div>
+        <div class="feature-item"><span class="feature-dot">◆</span>LLMが裏側で支える準One-to-One体験（名前差し替え・文言最適化）</div>
+        <div class="feature-item"><span class="feature-dot">◆</span>ギフト購入 → ウィジェット上でコレクション可視化 → 継続動機に</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone-wrap">
+    <div style="font-size:11px;color:#64748b;font-weight:600;letter-spacing:1px;">iPhone ホーム画面</div>
+    <div class="phone">
+      <div class="phone-inner">
+
+        <!-- Wallpaper -->
+        <div class="wallpaper" id="wallpaper">
+          <!-- Stars generated by JS -->
+        </div>
+
+        <!-- Dynamic Island -->
+        <div class="dynamic-island" id="dynamicIsland">
+          <div class="di-camera"></div>
+          <div class="di-live-dot"></div>
+          <div class="di-live-text">LIVE</div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+          <div class="status-time">9:41</div>
+          <div class="status-icons">
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0.5" width="3" height="11.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity="0.3"/></svg>
+            <svg width="15" height="12" viewBox="0 0 15 12" fill="white"><path d="M7.5 2.5C9.8 2.5 11.8 3.5 13.2 5L14.5 3.7C12.7 1.9 10.2 0.7 7.5 0.7C4.8 0.7 2.3 1.9 0.5 3.7L1.8 5C3.2 3.5 5.2 2.5 7.5 2.5Z" opacity="0.3"/><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7.1L12.6 5.8C11.2 4.4 9.4 3.5 7.5 3.5C5.6 3.5 3.8 4.4 2.4 5.8L3.7 7.1C4.7 6.1 6 5.5 7.5 5.5Z"/><circle cx="7.5" cy="11" r="1.5"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="white"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-width="1" fill="none"/><rect x="23" y="4" width="2" height="4" rx="1"/><rect x="1.5" y="2.5" width="16" height="7" rx="1.5"/></svg>
+          </div>
+        </div>
+
+        <!-- Notification -->
+        <div class="notification" id="notification">
+          <div class="notif-app-icon">⭐</div>
+          <div class="notif-body">
+            <div class="notif-header">
+              <div class="notif-app">応援ウィジェット</div>
+              <div class="notif-time">今</div>
+            </div>
+            <div class="notif-title" id="notifTitle">Sakura Bloom がLIVE配信を開始しました</div>
+            <div class="notif-text" id="notifText">今すぐタップして視聴 → ウィジェットでも確認できます</div>
+          </div>
+        </div>
+
+        <!-- Widget -->
+        <div class="widget" id="widget">
+          <div class="widget-bg" id="widgetBg"></div>
+          <div class="widget-content">
+            <div class="widget-avatar-wrap">
+              <div class="widget-avatar" id="widgetAvatar">
+                <div class="widget-avatar-glow"></div>
+                <span id="avatarEmoji">🌸</span>
+                <div class="widget-live-badge" id="liveBadge">LIVE</div>
+              </div>
+              <div class="widget-avatar-name">Sakura Bloom</div>
+            </div>
+            <div class="widget-right">
+              <div class="widget-tag" id="widgetTag">応援ウィジェット</div>
+              <div class="widget-message" id="widgetMessage">
+                今日も1日お疲れ様でした🌸<br>みんなの応援がいつも力になってるよ。
+              </div>
+              <div class="widget-meta">
+                <div class="widget-gift-count">🎁 <span id="giftCount">12</span> 個コレクション中</div>
+                <div class="widget-rank">👑 応援ランク <span id="rankVal">Silver</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Gift effect overlay -->
+          <div class="gift-effect" id="giftEffect">
+            <div class="gift-emoji">🎁</div>
+          </div>
+        </div>
+
+        <!-- App icons -->
+        <div class="apps-section">
+          <div class="app-icon">
+            <div class="app-icon-img ic-youtube"><span>▶</span></div>
+            <div class="app-icon-label">YouTube</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-x" style="color:#fff;font-size:20px;font-weight:900;">𝕏</div>
+            <div class="app-icon-label">X</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-insta" style="color:#fff;font-size:24px;">📷</div>
+            <div class="app-icon-label">Instagram</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-tiktok" style="color:#fff;font-size:24px;">♪</div>
+            <div class="app-icon-label">TikTok</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-line" style="color:#fff;font-size:24px;">💬</div>
+            <div class="app-icon-label">LINE</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-fanbox" style="color:#fff;font-size:18px;font-weight:800;">F</div>
+            <div class="app-icon-label">FANBOX</div>
+          </div>
+          <div class="app-icon">
+            <div class="app-icon-img ic-ouen" style="color:#fff;font-size:22px;">⭐</div>
+            <div class="app-icon-label" style="font-weight:700;">応援</div>
+            <div style="position:absolute;top:-4px;right:calc(50% - 37px);" class="app-badge">3</div>
+          </div>
+          <div class="app-icon" style="position:relative;">
+            <div class="app-icon-img ic-settings" style="color:#fff;font-size:22px;">⚙️</div>
+            <div class="app-icon-label">設定</div>
+          </div>
+        </div>
+
+        <!-- Dock -->
+        <div class="dock">
+          <div class="dock-icon" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">📞</div>
+          <div class="dock-icon" style="background:linear-gradient(135deg,#16a34a,#22c55e)">💬</div>
+          <div class="dock-icon" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">⭐</div>
+          <div class="dock-icon" style="background:linear-gradient(135deg,#ea580c,#f97316)">🎵</div>
+        </div>
+
+      </div>
+    </div>
+    <div style="font-size:12px;color:#475569;text-align:center;">← ボタンでウィジェット状態を切替</div>
+  </div>
+</div>
+
+<script>
+// Generate stars
+const wallpaper = document.getElementById('wallpaper');
+for (let i = 0; i < 60; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  const size = Math.random() * 2 + 0.5;
+  star.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${Math.random()*100}%; top:${Math.random()*100}%;
+    --d:${2+Math.random()*4}s; --delay:${Math.random()*4}s; --op:${0.2+Math.random()*0.6};
+  `;
+  wallpaper.appendChild(star);
+}
+
+const states = {
+  normal: {
+    widgetBg: 'linear-gradient(135deg, rgba(88,28,135,0.85) 0%, rgba(30,27,75,0.9) 100%)',
+    borderColor: 'rgba(139,92,246,0.4)',
+    avatarEmoji: '🌸',
+    avatarBg: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+    tag: '応援ウィジェット',
+    message: '今日も1日お疲れ様でした🌸<br>みんなの応援がいつも力になってるよ。',
+    liveBadge: false,
+    di: false,
+    notification: false,
+    giftEffect: false,
+    wallpaperExtra: ''
+  },
+  live: {
+    widgetBg: 'linear-gradient(135deg, rgba(127,0,0,0.85) 0%, rgba(40,10,10,0.95) 100%)',
+    borderColor: 'rgba(239,68,68,0.6)',
+    avatarEmoji: '🎙',
+    avatarBg: 'linear-gradient(135deg, #dc2626, #ef4444)',
+    tag: '🔴 LIVE 配信中',
+    message: '今から「夏の思い出雑談」配信スタート！みんな来てね🎉',
+    liveBadge: true,
+    di: true,
+    notification: true,
+    notifTitle: 'Sakura Bloom が LIVE 配信を開始',
+    notifText: '「夏の思い出雑談」今すぐタップして視聴',
+    giftEffect: false,
+    wallpaperExtra: 'radial-gradient(ellipse at center, rgba(239,68,68,0.1) 0%, transparent 60%)'
+  },
+  message: {
+    widgetBg: 'linear-gradient(135deg, rgba(30,64,175,0.85) 0%, rgba(30,27,75,0.9) 100%)',
+    borderColor: 'rgba(96,165,250,0.5)',
+    avatarEmoji: '💌',
+    avatarBg: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+    tag: '💌 あなたへのメッセージ',
+    message: '先日のギフトありがとう！特別に応援してくれてること、ちゃんと伝わってるよ✨',
+    liveBadge: false,
+    di: false,
+    notification: true,
+    notifTitle: 'Sakura Bloom からメッセージが届きました',
+    notifText: 'あなただけへの特別メッセージ',
+    giftEffect: false,
+  },
+  gift: {
+    widgetBg: 'linear-gradient(135deg, rgba(88,28,135,0.85) 0%, rgba(30,27,75,0.9) 100%)',
+    borderColor: 'rgba(245,158,11,0.6)',
+    avatarEmoji: '🎁',
+    avatarBg: 'linear-gradient(135deg, #d97706, #f59e0b)',
+    tag: '🎁 デジタルギフト取得！',
+    message: '「夏の特別ギフト🌸」を受け取りました！コレクションに追加されました。',
+    liveBadge: false,
+    di: false,
+    notification: true,
+    notifTitle: '「夏の特別ギフト🌸」を取得しました',
+    notifText: 'コレクションが 13 個になりました 🎊',
+    giftEffect: true,
+  }
+};
+
+let notifTimer = null;
+
+function setState(key, btn) {
+  // Update buttons
+  document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const s = states[key];
+  const widgetBg = document.getElementById('widgetBg');
+  const avatarEl = document.getElementById('widgetAvatar');
+  const emojiEl = document.getElementById('avatarEmoji');
+  const tagEl = document.getElementById('widgetTag');
+  const msgEl = document.getElementById('widgetMessage');
+  const liveBadgeEl = document.getElementById('liveBadge');
+  const diEl = document.getElementById('dynamicIsland');
+  const notifEl = document.getElementById('notification');
+  const giftEffectEl = document.getElementById('giftEffect');
+  const notifTitleEl = document.getElementById('notifTitle');
+  const notifTextEl = document.getElementById('notifText');
+  const widgetEl = document.getElementById('widget');
+
+  // Apply widget bg
+  widgetBg.style.background = s.widgetBg;
+  widgetBg.style.borderColor = s.borderColor;
+  widgetEl.style.boxShadow = `0 0 20px ${s.borderColor}`;
+
+  // Avatar
+  emojiEl.textContent = s.avatarEmoji;
+  avatarEl.style.background = s.avatarBg;
+
+  // Tag + message
+  tagEl.textContent = s.tag.replace('🔴 ', '');
+  if (s.tag.includes('🔴')) tagEl.innerHTML = '🔴 LIVE 配信中';
+  if (s.tag.includes('💌')) tagEl.innerHTML = '💌 あなたへのメッセージ';
+  if (s.tag.includes('🎁')) tagEl.innerHTML = '🎁 デジタルギフト取得！';
+  if (key === 'normal') tagEl.innerHTML = '応援ウィジェット';
+
+  msgEl.innerHTML = s.message;
+  msgEl.classList.remove('new');
+  void msgEl.offsetWidth;
+  msgEl.classList.add('new');
+
+  // Live badge
+  liveBadgeEl.style.display = s.liveBadge ? 'block' : 'none';
+
+  // Dynamic island
+  if (s.di) { diEl.classList.add('live'); } else { diEl.classList.remove('live'); }
+
+  // Gift effect
+  if (s.giftEffect) {
+    giftEffectEl.classList.add('show');
+    setTimeout(() => giftEffectEl.classList.remove('show'), 900);
+  }
+
+  // Notification
+  if (notifTimer) clearTimeout(notifTimer);
+  notifEl.classList.remove('show');
+  if (s.notification) {
+    if (s.notifTitle) notifTitleEl.textContent = s.notifTitle;
+    if (s.notifText) notifTextEl.textContent = s.notifText;
+    notifEl.style.top = key === 'live' ? '62px' : '62px';
+    setTimeout(() => notifEl.classList.add('show'), 200);
+    notifTimer = setTimeout(() => notifEl.classList.remove('show'), 4000);
+  }
+
+  // Gift count
+  if (key === 'gift') {
+    document.getElementById('giftCount').textContent = '13';
+  } else {
+    document.getElementById('giftCount').textContent = '12';
+  }
+}
+
+// Auto-cycle messages in normal mode
+const normalMessages = [
+  '今日も1日お疲れ様でした🌸<br>みんなの応援がいつも力になってるよ。',
+  '新しいイラスト描いたよ！<br>アプリで見てみてね🎨✨',
+  '来週の配信、楽しみにしててね🎙<br>特別なお知らせもあるかも？'
+];
+let msgIdx = 0;
+setInterval(() => {
+  const activeBtns = document.querySelectorAll('.state-btn.active');
+  if (activeBtns[0] && activeBtns[0].getAttribute('onclick').includes('normal')) {
+    msgIdx = (msgIdx + 1) % normalMessages.length;
+    const msgEl = document.getElementById('widgetMessage');
+    msgEl.innerHTML = normalMessages[msgIdx];
+    msgEl.classList.remove('new'); void msgEl.offsetWidth; msgEl.classList.add('new');
+  }
+}, 4000);
+</script>
+</body>
+</html>
