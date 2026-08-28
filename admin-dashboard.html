@@ -416,7 +416,7 @@
           </div>
           <span class="tag tag-blue">2026年PoB期</span>
         </div>
-        <canvas id="platformRevenueChart" height="260"></canvas>
+        <div style="position:relative;height:260px;"><canvas id="platformRevenueChart"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
@@ -425,8 +425,8 @@
             <div class="chart-sub">今月の内訳</div>
           </div>
         </div>
-        <div style="display:flex;justify-content:center;">
-          <canvas id="genreChart" height="220" width="220"></canvas>
+        <div style="position:relative;height:220px;">
+          <canvas id="genreChart"></canvas>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;justify-content:center;">
           <div style="display:flex;align-items:center;gap:5px;font-size:11px;"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block;"></span>VTuber/YouTuber</div>
@@ -689,7 +689,7 @@
             <div class="chart-sub">ファン課金 vs 協賛（万円）</div>
           </div>
         </div>
-        <canvas id="revenueStackChart" height="200"></canvas>
+        <div style="position:relative;height:200px;"><canvas id="revenueStackChart"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
@@ -698,7 +698,7 @@
             <div class="chart-sub">30日継続率の比較</div>
           </div>
         </div>
-        <canvas id="genreRetentionChart" height="200"></canvas>
+        <div style="position:relative;height:200px;"><canvas id="genreRetentionChart"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
@@ -707,7 +707,7 @@
             <div class="chart-sub">月次ファン獲得・維持動向</div>
           </div>
         </div>
-        <canvas id="fanGrowthChart" height="200"></canvas>
+        <div style="position:relative;height:200px;"><canvas id="fanGrowthChart"></canvas></div>
       </div>
     </div>
 
@@ -803,6 +803,7 @@ new Chart(document.getElementById('genreChart'), {
     }]
   },
   options: {
+    responsive: true, maintainAspectRatio: false,
     cutout: '60%',
     plugins: {
       legend: { display: false },
@@ -832,7 +833,7 @@ new Chart(document.getElementById('revenueStackChart'), {
     ]
   },
   options: {
-    responsive: true,
+    responsive: true, maintainAspectRatio: false,
     plugins: { legend: { labels: { color: C.muted, font: { size: 11 } } } },
     scales: {
       x: { ticks: { color: C.muted }, grid: { display: false } },
@@ -855,7 +856,7 @@ new Chart(document.getElementById('genreRetentionChart'), {
     }]
   },
   options: {
-    responsive: true, indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
     plugins: { legend: { display: false } },
     scales: {
       x: { ticks: { color: C.muted, callback: v => v+'%' }, grid: { color: C.border }, min: 0, max: 100 },
@@ -885,7 +886,7 @@ new Chart(document.getElementById('fanGrowthChart'), {
     ]
   },
   options: {
-    responsive: true,
+    responsive: true, maintainAspectRatio: false,
     plugins: { legend: { labels: { color: C.muted, font: { size: 11 } } } },
     scales: {
       x: { ticks: { color: C.muted }, grid: { display: false } },
