@@ -34,6 +34,18 @@ export default function PatternsExplorer({ patterns }: { patterns: Pattern[] }) 
 
   return (
     <>
+      <div
+        className="card card-pad"
+        style={{ marginBottom: 22, fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.8 }}
+      >
+        <b style={{ color: 'var(--ink)' }}>データについて：</b>
+        「競合事例」の型は、AIBP局 競合インテリジェンス月次レポートで実際に記録されている事例
+        （People Fusion、Agentic Commerce ONE、WPP、アクセンチュア×OpenAI 等）に基づく。
+        「自社案件」の型は、Notion「得意先案件DB」「型化ライブラリ（AIBP局）」DBへの接続が
+        まだ有効化されていないため、構成イメージを示すための<b style={{ color: 'var(--amber)' }}>サンプル</b>
+        （実際の案件ではない）。Notion連携が有効になり次第、実データに差し替える。
+      </div>
+
       <div className="grid g3" style={{ marginBottom: 22, alignItems: 'end' }}>
         <div>
           <span className="field-label">キーワード検索</span>
@@ -84,7 +96,14 @@ export default function PatternsExplorer({ patterns }: { patterns: Pattern[] }) 
                 <span className="tag" style={{ color: sourceColor[p.sourceType], borderColor: sourceColor[p.sourceType] }}>
                   {sourceLabel[p.sourceType]}
                 </span>
-                <span className="tag">{p.industry}</span>
+                <span style={{ display: 'flex', gap: 6 }}>
+                  {p.isPlaceholder && (
+                    <span className="tag" style={{ color: 'var(--amber)', borderColor: 'var(--amber)' }}>
+                      サンプル
+                    </span>
+                  )}
+                  <span className="tag">{p.industry}</span>
+                </span>
               </div>
               <div style={{ fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.5 }}>{p.name}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginTop: 8, lineHeight: 1.7 }}>{p.summary}</div>

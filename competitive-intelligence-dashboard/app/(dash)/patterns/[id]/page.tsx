@@ -60,27 +60,45 @@ export default async function PatternDetailPage({ params }: { params: { id: stri
         </div>
 
         <div>
-          <Card title="出典">
+          <Card title="出典" tag={pattern.isPlaceholder ? 'サンプル' : undefined} tagClass="amber">
             <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 700 }}>{pattern.sourceName}</div>
             <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 6 }}>
               {pattern.sourceType === 'competitive'
                 ? `競合インテリジェンス月次レポート（${pattern.relatedMonth ?? '―'}）由来`
                 : 'Notion 得意先案件DB／型化ライブラリ（AIBP局）DB 由来'}
             </div>
-            <a
-              href={pattern.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'inline-block',
-                marginTop: 12,
-                fontSize: 12.5,
-                color: 'var(--blue)',
-                textDecoration: 'underline',
-              }}
-            >
-              元のリンクを開く →
-            </a>
+            {pattern.sourceUrl ? (
+              <a
+                href={pattern.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'inline-block',
+                  marginTop: 12,
+                  fontSize: 12.5,
+                  color: 'var(--blue)',
+                  textDecoration: 'underline',
+                }}
+              >
+                元のリンクを開く →
+              </a>
+            ) : (
+              <div
+                style={{
+                  marginTop: 12,
+                  fontSize: 12,
+                  color: 'var(--ink-3)',
+                  background: 'var(--panel-3)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 8,
+                  padding: '8px 10px',
+                }}
+              >
+                {pattern.sourceType === 'competitive'
+                  ? 'リンクなし（社内資料である月次レポート本文が出典のため）'
+                  : 'リンクなし（Notion連携が未接続のため、実ページへのリンクはまだ設定できない）'}
+              </div>
+            )}
             <div className="divider" />
             <div style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>登録日：{pattern.registeredAt}</div>
           </Card>
