@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIBP局｜競合インテリジェンス &amp; 型化ライブラリ</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --panel: #ffffff;
+    --panel-2: #f0f4f8;
+    --line: #d9e1ec;
+    --line-soft: #e6ecf3;
+    --ink: #1a2c4a;
+    --ink-2: #3a4a63;
+    --ink-3: #64748b;
+    --navy: #1e3a5f;
+    --navy-dark: #14263f;
+    --amber: #f59e0b;
+    --amber-dark: #d97706;
+    --amber-soft: #fff7ed;
+    --ca-green: #2e9e5b;
+    --hdy-green: #00b050;
+    --blue-chip: #1561a7;
+    --shadow: 0 14px 34px -18px rgba(30,58,95,.22);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: linear-gradient(165deg,#f7f9fb,#eef2f6);
+    color: var(--ink);
+    font-family: "BIZ UDPGothic","Yu Gothic","游ゴシック","Hiragino Sans","Noto Sans JP",sans-serif;
+    min-height: 100vh;
+  }
+  a { color:inherit; }
+  .layout { display:flex; min-height:100vh; }
+
+  /* Sidebar */
+  .sidebar { width:230px; flex-shrink:0; background:var(--navy); color:#fff; display:flex; flex-direction:column; padding:22px 0; position:sticky; top:0; height:100vh; }
+  .sidebar-brand { padding:0 20px 18px; border-bottom:1px solid rgba(255,255,255,.15); margin-bottom:10px; }
+  .sidebar-brand-mark { font-size:11px; font-weight:800; letter-spacing:2px; color:var(--amber); text-transform:uppercase; margin-bottom:4px; }
+  .sidebar-brand-name { font-size:16px; font-weight:800; }
+  .sidebar-brand-sub { font-size:10.5px; color:rgba(255,255,255,.6); margin-top:3px; letter-spacing:.05em; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:12px 20px; font-size:13.5px; color:rgba(255,255,255,.72); cursor:pointer; border-left:3px solid transparent; transition:.15s; }
+  .nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
+  .nav-item.active { background:rgba(245,158,11,.14); color:#fff; border-left-color:var(--amber); font-weight:700; }
+  .nav-icon { width:20px; text-align:center; font-size:15px; }
+  .sidebar-foot { margin-top:auto; padding:16px 20px 0; border-top:1px solid rgba(255,255,255,.15); font-size:11px; color:rgba(255,255,255,.5); line-height:1.7; }
+
+  /* Main */
+  .main { flex:1; min-width:0; }
+  .topbar { background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); padding:0 30px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  .topbar-title { font-size:16px; font-weight:800; color:var(--ink); }
+  .badge-demo { background:var(--amber-soft); color:var(--amber-dark); border:1px solid rgba(217,119,6,.3); font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .content { padding:28px 32px 70px; max-width:1360px; }
+  .view { display:none; }
+  .view.active { display:block; }
+
+  .section-label { font-size:14px; letter-spacing:.08em; color:var(--ink); font-weight:800; margin:34px 0 14px; display:flex; align-items:center; gap:10px; }
+  .section-label::before { content:''; width:4px; height:15px; background:var(--amber); border-radius:2px; }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--line); }
+  .section-label:first-child { margin-top:0; }
+
+  .grid { display:grid; gap:16px; }
+  .g2 { grid-template-columns:repeat(2,1fr); }
+  .g3 { grid-template-columns:repeat(3,1fr); }
+  .g4 { grid-template-columns:repeat(4,1fr); }
+  @media (max-width:1100px){ .g3,.g4{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:720px){ .g2,.g3,.g4{grid-template-columns:1fr;} }
+
+  .card { background:linear-gradient(165deg,#fbfcfd,var(--panel)); border:1px solid var(--line-soft); border-radius:14px; box-shadow:var(--shadow); padding:20px 22px; }
+  .card-title { font-size:14.5px; font-weight:800; color:var(--ink); margin-bottom:12px; }
+  .card-note { font-size:11.5px; color:var(--ink-3); }
+
+  .stat-label { font-size:12px; font-weight:700; color:var(--ink-2); }
+  .stat-val { font-size:30px; font-weight:800; margin-top:6px; color:var(--ink); }
+  .stat-val .unit { font-size:14px; color:var(--ink-3); font-weight:700; margin-left:2px; }
+  .stat-sub { font-size:11.5px; color:var(--ink-3); margin-top:6px; }
+  .stat-sub b { color:var(--amber-dark); }
+
+  .tag { font-size:10.5px; padding:3px 9px; border-radius:999px; font-weight:700; background:var(--panel-2); color:var(--ink-2); border:1px solid var(--line); white-space:nowrap; }
+  .pill { font-size:10.5px; padding:4px 10px; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink-2); }
+  .pill-row { display:flex; flex-wrap:wrap; gap:6px; }
+
+  table.tbl { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .tbl th { text-align:left; color:var(--ink-3); font-weight:700; font-size:10.5px; letter-spacing:.05em; padding:8px 10px; border-bottom:1px solid var(--line); }
+  .tbl td { padding:9px 10px; border-bottom:1px solid var(--line-soft); color:var(--ink); }
+  .tbl tr:last-child td { border-bottom:none; }
+  .tbl .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:7px; vertical-align:middle; }
+
+  .excl { background:var(--panel-2); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--ink-2); line-height:1.7; margin-top:12px; }
+  .excl b { color:var(--amber-dark); }
+
+  .topic-row { display:flex; gap:14px; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--line-soft); }
+  .topic-row:last-child { border-bottom:none; }
+
+  /* patterns */
+  .filters { display:grid; grid-template-columns:2fr 1.4fr 1.2fr; gap:14px; margin-bottom:18px; align-items:end; }
+  @media (max-width:860px){ .filters{grid-template-columns:1fr;} }
+  .field-label { font-size:10.5px; color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; display:block; font-weight:700; }
+  .inp, .sel { width:100%; font-family:inherit; font-size:12.5px; padding:9px 12px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); }
+  .seg { display:inline-flex; background:#fff; border:1px solid var(--line-soft); border-radius:10px; padding:3px; gap:2px; }
+  .seg button { font-family:inherit; font-size:11.5px; padding:7px 13px; border:none; background:transparent; color:var(--ink-3); border-radius:7px; cursor:pointer; }
+  .seg button.on { background:var(--amber-soft); color:var(--amber-dark); font-weight:700; }
+
+  .pattern-card { background:#fff; border:1px solid var(--line-soft); border-radius:14px; padding:18px 20px; box-shadow:var(--shadow); cursor:pointer; transition:.15s; }
+  .pattern-card:hover { transform:translateY(-3px); border-color:var(--line); }
+  .pattern-name { font-weight:800; font-size:15px; color:var(--ink); margin:10px 0 8px; line-height:1.5; }
+  .pattern-summary { font-size:12px; color:var(--ink-2); line-height:1.7; }
+  .pattern-source { font-size:10.5px; color:var(--ink-3); margin-top:12px; }
+  .badge-sample { color:var(--amber-dark); border-color:var(--amber-dark); }
+
+  .info-banner { background:#fff; border:1px solid var(--line-soft); border-radius:12px; padding:14px 16px; font-size:12px; color:var(--ink-2); line-height:1.8; margin-bottom:20px; }
+
+  /* modal */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(20,30,45,.55); z-index:200; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; }
+  .overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:16px; max-width:840px; width:100%; padding:0; box-shadow:0 30px 70px -20px rgba(0,0,0,.4); }
+  .modal-head { background:var(--navy); color:#fff; padding:22px 26px; border-radius:16px 16px 0 0; position:relative; }
+  .modal-close { position:absolute; top:16px; right:18px; background:rgba(255,255,255,.15); border:none; color:#fff; width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:14px; }
+  .modal-eyebrow { font-size:11.5px; color:var(--amber); font-weight:700; letter-spacing:.05em; margin-bottom:6px; }
+  .modal-title { font-size:20px; font-weight:800; }
+  .modal-body { padding:22px 26px 26px; }
+  .modal-section { margin-bottom:16px; }
+  .modal-section h4 { font-size:12.5px; font-weight:800; color:var(--navy); margin-bottom:8px; }
+  .modal-section p, .modal-section li { font-size:13px; color:var(--ink-2); line-height:1.8; }
+  .modal-section ul { padding-left:18px; }
+  .export-btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; font-family:inherit; }
+  .export-btn:hover { background:var(--navy-dark); }
+  .link-none { background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:11.5px; color:var(--ink-3); margin-top:8px; }
+
+  .foot { margin-top:50px; padding-top:18px; border-top:1px solid var(--line-soft); color:var(--ink-3); font-size:11px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-mark">AIBP局</div>
+      <div class="sidebar-brand-name">CI &amp; PATTERN</div>
+      <div class="sidebar-brand-sub">競合インテリジェンス・型化ライブラリ</div>
+    </div>
+    <div class="nav-item active" data-view="home" onclick="showView('home')"><span class="nav-icon">🏠</span>ホーム</div>
+    <div class="nav-item" data-view="competitive" onclick="showView('competitive')"><span class="nav-icon">📊</span>競合インテリジェンス</div>
+    <div class="nav-item" data-view="patterns" onclick="showView('patterns')"><span class="nav-icon">🧩</span>型化ライブラリ</div>
+    <div class="sidebar-foot">単体HTML版プロトタイプ<br>データはすべてデモ用ダミー値</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">ホーム</div>
+      <span class="badge-demo">デモ用ダミーデータ</span>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ HOME ============ -->
+      <div class="view active" id="view-home">
+        <div class="info-banner">
+          <b style="color:var(--ink)">このダッシュボードについて：</b>
+          AIBP局の競合インテリジェンス月次レポートと、そこから見つかる「型」を1つにまとめたプロトタイプです。
+          「競合インテリジェンス」は月次レポートの構成（ランキング・各社の動き・世界の潮流）を再現、
+          「型化ライブラリ」は競合との差分パターンと、Notion案件DB由来の型（現在はサンプル）を検索・閲覧できます。
+        </div>
+
+        <div class="grid g4">
+          <div class="card">
+            <div class="stat-label">当月の収集件数</div>
+            <div class="stat-val">224<span class="unit">件</span></div>
+            <div class="stat-sub"><b>+12件</b> 前月比</div>
+          </div>
+          <div class="card">
+            <div class="stat-label">A判定（本編掲載）</div>
+            <div class="stat-val">25<span class="unit">件</span></div>
+            <div class="stat-sub">50件中・20点以上</div>
+          </div>
+          <div class="card">
+            <div class="stat-label">登録済みの型</div>
+            <div class="stat-val" id="home-pattern-count">-<span class="unit">件</span></div>
+            <div class="stat-sub">競合由来＋自社案件由来</div>
+          </div>
+          <div class="card">
+            <div class="stat-label">今月の幹トレンド</div>
+            <div style="font-size:13px; font-weight:700; color:var(--ink); margin-top:8px; line-height:1.6;">
+              エージェンティックコマースの提供メニュー化が各社で進行
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">2つの入口</div>
+        <div class="grid g2">
+          <div class="pattern-card" onclick="showView('competitive')" style="border-left:4px solid var(--navy);">
+            <span class="tag" style="color:var(--navy); border-color:var(--navy);">01</span>
+            <div class="pattern-name">競合の動きを把握する</div>
+            <div class="pattern-summary">電通・CA・アクセンチュア・PwC・海外勢・博報堂DYグループの当月の動きを、3軸採点（構造・影響・実務）に基づくランキングと事実整理で確認する。</div>
+            <div class="pattern-source">→ 競合インテリジェンスを開く</div>
+          </div>
+          <div class="pattern-card" onclick="showView('patterns')" style="border-left:4px solid var(--amber);">
+            <span class="tag" style="color:var(--amber-dark); border-color:var(--amber-dark);">02</span>
+            <div class="pattern-name">型を探す・積み上げる</div>
+            <div class="pattern-summary">競合インテリジェンスで見つけた差分と、Notion得意先案件DB／型化ライブラリDBの案件から抽出した「型」を横断的に検索・閲覧する。</div>
+            <div class="pattern-source">→ 型化ライブラリを開く</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ COMPETITIVE ============ -->
+      <div class="view" id="view-competitive">
+        <div class="info-banner">2026年8月号（ダミー）：電通・サイバーエージェント・アクセンチュア／PwC・海外勢・博報堂DYグループの動きを、収集→3軸採点（A/B/C判定）→事実整理のプロセスに沿って可視化。博報堂・博報堂DYグループはランキング対象に含めない。</div>
+
+        <div class="section-label">今月の全体像</div>
+        <div class="grid g4">
+          <div class="card"><div class="stat-label">収集件数</div><div class="stat-val">224<span class="unit">件</span></div><div class="stat-sub"><b>+12</b> 前月比</div></div>
+          <div class="card"><div class="stat-label">A判定（本編掲載）</div><div class="stat-val">25<span class="unit">件</span></div><div class="stat-sub">50件中・20点以上</div></div>
+          <div class="card"><div class="stat-label">B判定（アペンディクス）</div><div class="stat-val">23<span class="unit">件</span></div><div class="stat-sub">12〜19点</div></div>
+          <div class="card"><div class="stat-label">C判定（記録のみ）</div><div class="stat-val">2<span class="unit">件</span></div><div class="stat-sub">11点以下</div></div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="card-title">今月の幹トレンド</div>
+          <ul style="padding-left:18px; font-size:13px; color:var(--ink-2); line-height:1.9;">
+            <li>エージェンティックコマース（AIが購買を代行する仕組み）の提供メニュー化が競合各社で進行</li>
+            <li>1stパーティデータを類推でつなぐ「非直接突合型」のID連携が主流化</li>
+            <li>診断・スコアリングを入口にした提案型のDX支援が増加</li>
+          </ul>
+        </div>
+
+        <div class="section-label">ランキング</div>
+        <div class="grid g2">
+          <div class="card">
+            <div class="card-title">ランキング① 電通・サイバーエージェント</div>
+            <table class="tbl" id="tbl-ranking1"></table>
+            <div class="card-note" style="margin-top:10px;">構造・影響・実務の3軸×各10点＝30点満点。点数は目安、最終判断は局長を含むメンバーで決定。</div>
+          </div>
+          <div class="card">
+            <div class="card-title">ランキング② 電通・CA以外の競合</div>
+            <table class="tbl" id="tbl-ranking2"></table>
+            <div class="card-note" style="margin-top:10px;">構造・影響・実務の3軸×各10点＝30点満点。</div>
+          </div>
+        </div>
+
+        <div class="section-label">今月の博報堂DYグループ 主要トピック</div>
+        <div class="card" id="own-topics"></div>
+
+        <div class="section-label">各社の動き</div>
+        <div class="grid g3" id="company-moves"></div>
+
+        <div class="section-label">世界の潮流</div>
+        <div class="grid g4" id="world-trends"></div>
+      </div>
+
+      <!-- ============ PATTERNS ============ -->
+      <div class="view" id="view-patterns">
+        <div class="info-banner">
+          <b style="color:var(--ink)">データについて：</b>
+          「競合事例」の型は、AIBP局 競合インテリジェンス月次レポートで実際に記録されている事例
+          （People Fusion、Agentic Commerce ONE、WPP、アクセンチュア×OpenAI 等）に基づく。
+          「自社案件」の型は、Notion「得意先案件DB」「型化ライブラリ（AIBP局）」DBへの接続が
+          まだ有効化されていないため、構成イメージを示すための<b style="color:var(--amber-dark)">サンプル</b>
+          （実際の案件ではない）。
+        </div>
+
+        <div class="filters">
+          <div>
+            <span class="field-label">キーワード検索</span>
+            <input class="inp" id="p-search" placeholder="型の名前・要約・適用場面で検索" oninput="renderPatterns()">
+          </div>
+          <div>
+            <span class="field-label">出典タイプ</span>
+            <div class="seg" id="p-source-seg">
+              <button class="on" data-v="all" onclick="setSource('all')">すべて</button>
+              <button data-v="competitive" onclick="setSource('competitive')">競合事例</button>
+              <button data-v="client_case" onclick="setSource('client_case')">自社案件</button>
+            </div>
+          </div>
+          <div>
+            <span class="field-label">業種</span>
+            <select class="sel" id="p-industry" onchange="renderPatterns()">
+              <option value="all">すべての業種</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-note" id="p-count" style="margin-bottom:14px;"></div>
+        <div class="grid g3" id="pattern-grid"></div>
+      </div>
+
+      <div class="foot">AIBP CI &amp; PATTERN — AIBP局向けプロトタイプ（単体HTML版）。データはすべてデモ用ダミー値です。</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pattern detail modal -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-eyebrow" id="m-eyebrow"></div>
+      <div class="modal-title" id="m-title"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h4>適用場面</h4>
+        <div class="pill-row" id="m-scenes"></div>
+      </div>
+      <div class="modal-section">
+        <h4>博報堂との差分／新しさの言語化</h4>
+        <p id="m-diff"></p>
+      </div>
+      <div class="modal-section">
+        <h4>他の案件への水平展開アイデア</h4>
+        <ul id="m-ideas"></ul>
+      </div>
+      <div class="modal-section">
+        <h4>出典</h4>
+        <p id="m-source" style="font-weight:700; color:var(--ink);"></p>
+        <p id="m-source-note" style="margin-top:2px;"></p>
+        <div class="link-none" id="m-link-none"></div>
+      </div>
+      <div class="modal-section">
+        <h4>提案資料への出力</h4>
+        <p style="margin-bottom:12px;">この型を、AIBP局の月次レポートと同じデザイントークン（紺×オレンジ、BIZ UDPゴシック、16:9）の1枚ものPPTXとして書き出す。</p>
+        <button class="export-btn" id="m-export-btn" onclick="exportCurrentPattern()">この型をPPTXで書き出す</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== データ（すべてダミー。将来Notion実データに差し替え） ===================== */
+
+const competitive = {
+  monthlyOverview: { totalCount: 224, prevMonthDelta: 12, aCount: 25, bCount: 23, cCount: 2 },
+  ranking1: [
+    { rank:1, company:'電通デジタル', group:'dentsu', medium:'リリース', date:'2026/07/23', title:'生成AIを用いた購買予測モデルの提供開始', s:8, i:8, p:9 },
+    { rank:2, company:'サイバーエージェント', group:'ca', medium:'リリース', date:'2026/07/18', title:'広告運用自動化とレポーティングの統合提供', s:7, i:8, p:8 },
+    { rank:3, company:'電通', group:'dentsu', medium:'記事', date:'2026/07/15', title:'People Fusion提供開始、類推型ID連携で配信最適化', s:9, i:8, p:7 },
+    { rank:4, company:'CARTA ZERO', group:'dentsu', medium:'ウェビナー', date:'2026/07/10', title:'グループ横断データ活用の運用体制刷新を解説', s:6, i:6, p:7 },
+    { rank:5, company:'AJA', group:'ca', medium:'リリース', date:'2026/07/08', title:'SNS発話分析AIの機能拡張', s:6, i:6, p:6 },
+  ],
+  ranking2: [
+    { rank:1, company:'アクセンチュア', group:'other', medium:'リリース', date:'2026/07/15', title:'OpenAIと協業しDX成熟度診断メニューを提供開始', s:8, i:7, p:8 },
+    { rank:2, company:'PwC', group:'other', medium:'記事', date:'2026/07/20', title:'生成AIガバナンス支援サービスを拡充', s:6, i:6, p:7 },
+    { rank:3, company:'トランスコスモス', group:'other', medium:'リリース', date:'2026/07/05', title:'コンタクトセンターAI応対の対応言語拡大', s:5, i:5, p:6 },
+  ],
+  ownTopics: [
+    { date:'2026/07/07', headline:'メディア環境研究所「情報行動7分類」を発表', desc:'生活者の情報行動を7つに分類し、AI活用文脈での接点設計に活用できる指標を提示。', hi:true, ref:'特集①' },
+    { date:'2026/06/02', headline:'買物研究所「AIショッパー調査」を発表', desc:'買物における生成AI利用率24.6%、信頼度51.7%等の実態調査。', hi:true, ref:'特集②' },
+    { date:'2026/07/15', headline:'Agentic Commerce ONE クレデンシャルを更新', desc:'対話型購買支援エージェントの提供メニューを刷新。', hi:true, ref:'特集③' },
+    { date:'2026/07/29', headline:'DATA GEAR Enrichment 導入事例を追加公開', desc:'1stパーティデータへの生活者データエンリッチメント提案の実績を紹介。', hi:false, ref:'―' },
+  ],
+  companyMoves: [
+    { company:'電通・電通デジタル・CARTA ZERO', group:'dentsu',
+      headline:'データ関連の発表が集中。類推型ID連携での配信最適化を前面に。',
+      facts:[
+        '7/23 電通デジタルが生成AIを用いた購買予測モデルを提供開始（同社公表値で精度は非開示）',
+        '7/15 電通がPeople Fusionを提供開始。ゲート・ワン、Google、ドコモ等の外部データを類推でつなぐ',
+        '7/10 CARTA ZEROがグループ横断データ活用の運用体制刷新をウェビナーで解説',
+      ],
+      diff:'同じ領域にあるのは博報堂のDATA GEAR Enrichmentで、どちらもIDを直接突合しない類推型という点は共通する。違うのは出口で、博報堂は顧客理解までを担うのに対し、People Fusionは配信・効果検証まで含む。HABIT・Queridaで「なぜ買うのか」を根拠づけられる点は博報堂の側にある。' },
+    { company:'サイバーエージェント・AJA', group:'ca',
+      headline:'運用自動化と周辺工程（レポーティング・SNS分析）を束ねる動き。',
+      facts:[
+        '7/18 サイバーエージェントが広告運用の自動化とレポーティングを統合提供',
+        '7/8 AJAがSNS発話分析AIの機能を拡張',
+      ],
+      diff:'運用自動化そのものは差別化点になりにくく、前後工程を束ねてワンストップ化している点が受注の決め手。周辺工程まで一体化したメニューとして見せられているかは公表資料からは確認できない。' },
+    { company:'アクセンチュア×OpenAI', group:'other',
+      headline:'診断・スコアリングを入口にしたDX支援メニューを拡充。',
+      facts:[
+        '7/15 アクセンチュアがOpenAIと協業し、DX成熟度診断メニューを提供開始',
+        '診断は5要素（合計100点）で評価',
+      ],
+      diff:'配点の重みづけに相手の狙いが表れている。同種の診断ツールを自社が持たない場合、初回提案の「会話の入口」を先に取られる可能性がある。' },
+  ],
+  worldTrends: [
+    { no:'01', company:'WPP', date:'2026/07/01', headline:'エージェンティックコマースを正式な提供メニューに追加', body:'対話型AIによる購買代行を提供メニューとして発表。ACOの7/7発表より6日早い。' },
+    { no:'02', company:'Amazon', date:'2026/06/24', headline:'Alexa+ の広告連携機能を拡充', body:'音声アシスタント経由の商品推薦に広告枠を統合。実装範囲・精度は非開示。' },
+    { no:'03', company:'Jellyfish', date:'2026/06/25', headline:'AI活用の広告運用に関する調査を公表', body:'生成AIの活用が「実験段階」にとどまる企業が過半数という結果。' },
+    { no:'04', company:'Publicis', date:'2026/07/09', headline:'生成AIクリエイティブ制作基盤の対応言語を拡大', body:'多言語クリエイティブ生成の対応範囲を拡大したと発表。' },
+  ],
+};
+
+const patterns = [
+  { id:'cp-001', name:'類推型ID連携×配信一気通貫', summary:'直接IDを突合せず類推でつなぎ、そのまま配信・効果検証まで一気通貫で受注する型。',
+    scenes:['1stパーティデータ活用の提案','CDP導入直後の得意先','データ資産が薄い得意先'], sourceType:'competitive', sourceName:'People Fusion（電通グループ）', sourceUrl:null, industry:'業種横断',
+    diff:'博報堂DATA GEAR Enrichmentは顧客理解までを担うのに対し、この型は配信・効果検証まで含めて受注される。データ整理の入口から配信・検証まで切れ目なく取ることで、後工程の受注機会を先に握られる。',
+    ideas:['DATA GEAR Enrichmentの出口を配信・効果検証まで拡張し、同じ切れ目のなさを作る','自社パネル（HABIT等）を「なぜ買うのか」の根拠付けとして配信提案に組み込む'], registeredAt:'2026-08-05', relatedMonth:'2026年7月号' },
+  { id:'cp-002', name:'運用自動化の周辺工程まとめ売り', summary:'広告運用の自動化そのものより、前後の周辺工程（クリエイティブ生成・レポーティング）を束ねて提案する型。',
+    scenes:['運用型広告の内製化支援','複数媒体の統合レポーティング提案'], sourceType:'competitive', sourceName:'サイバーエージェント', sourceUrl:null, industry:'業種横断',
+    diff:'運用の自動化そのものは差別化点になりにくくなっているため、前後工程まで束ねてワンストップ化している点が受注の決め手になっている。',
+    ideas:['博報堂側も運用+クリエイティブ生成+レポーティングの3点セット提案フォーマットを型化する','得意先の運用内製化支援メニューとして、移行期の伴走部分を明示的に商品化する'], registeredAt:'2026-08-05', relatedMonth:'2026年7月号' },
+  { id:'cp-003', name:'診断×スコアリングで現状可視化してから提案', summary:'得意先のDX成熟度を独自スコア（100点満点等）で可視化し、伸びしろを起点に提案する型。',
+    scenes:['DX推進部門への最初のアプローチ','中期経営計画とのすり合わせ'], sourceType:'competitive', sourceName:'アクセンチュア×OpenAI', sourceUrl:null, industry:'業種横断',
+    diff:'配点の重みづけに相手の狙いが表れる。同種の診断ツールを持たない場合、まず「診断」という会話の入口を奪われる。',
+    ideas:['AIBP局として業種別の簡易診断シート（ヒアリング10問＋レーダーチャート）を型化し、初回提案の共通ツールにする'], registeredAt:'2026-08-06', relatedMonth:'2026年7月号' },
+  { id:'cp-004', name:'エージェンティックコマースの提供メニュー化', summary:'AIエージェント経由の購買導線を単発PoCではなく「提供メニュー」として掲げ、対外的に旗を立てる型。',
+    scenes:['ECサイトを持つ得意先へのAI活用提案','中長期のコマース戦略協議'], sourceType:'competitive', sourceName:'WPP', sourceUrl:null, industry:'小売・EC',
+    diff:'海外大手が先にメニュー化を発表しており、公表の早さそのものが商談の起点になっている。自社のAgentic Commerce ONEも同種の狙いを持つため、対外発信のタイミングを比較検証する必要がある型。',
+    ideas:['自社の新メニューも「PoC」ではなく「提供メニュー」として先に旗を立てる発信フォーマットを型化する'], registeredAt:'2026-08-06', relatedMonth:'2026年7月号' },
+  { id:'cp-005', name:'自社パネル基点の「なぜ買うか」根拠付け', summary:'大規模自社パネル（意識×行動データ）を根拠に、購買理由の説明力で差別化する型。',
+    scenes:['商品開発・マーケティング戦略への提言','得意先の意思決定層への説得材料'], sourceType:'competitive', sourceName:'博報堂買物研究所（自社トピック）', sourceUrl:null, industry:'消費財全般',
+    diff:'競合が配信・実行力で先行する場面でも、「なぜ買うのか」を説明できる自社パネル（HABIT約7,000人×約1,700項目、Querida等）は競合が公表していない強み。ただし発表の早さでは負けることがあるため、定点調査の発表タイミングも型として運用する。',
+    ideas:['自社パネルの定点調査を四半期ごとに「発表する」運用リズムに型化し、先出しを恒常化する'], registeredAt:'2026-08-07', relatedMonth:'2026年6月号' },
+  { id:'cp-006', name:'系譜の年表化による新規性の見極め', summary:'新製品発表を単独で見ず、その会社の過去の基盤の延長線上に位置づけて評価する型。',
+    scenes:['競合の新製品発表への反応検討','得意先から「競合の新サービスをどう見るか」と聞かれた時'], sourceType:'competitive', sourceName:'電通グループ（People Driven Marketing系譜）', sourceUrl:null, industry:'業種横断',
+    diff:'2017年からのデータ基盤の延長線上にあるものを「新規参入」と見誤ると、対応の優先順位を誤る。系譜を年表化して初めて「作り直し」なのか「新規」なのかを判断できる。',
+    ideas:['主要競合5社について自社基盤の系譜年表を常設で更新し、新製品発表のたびに位置づけを即答できるようにする'], registeredAt:'2026-08-07', relatedMonth:'2026年7月号' },
+
+  { id:'cc-001', name:'AIパーソナライズ×店頭体験の融合型', summary:'ECの購買データをAIで解析し、店頭の接客トークにその場で反映させる型。',
+    scenes:['D2Cブランドの店頭連携','OMO施策の起点提案'], sourceType:'client_case', isPlaceholder:true, sourceName:'得意先案件：化粧品ブランドA社 店頭AIレコメンド（サンプル）', sourceUrl:null, industry:'化粧品',
+    diff:'競合の同種提案はEC内で完結するものが多く、店頭スタッフの接客言語にまで落とし込んだ事例は少ない。「使えるデータ」から「使える接客トーク」への翻訳工程を型として持つのが新しさ。',
+    ideas:['住宅の展示場接客トークへの応用','自動車ディーラーの試乗接客への応用'], registeredAt:'2026-07-10' },
+  { id:'cc-002', name:'生活者データ起点のカテゴリー再定義', summary:'既存の商品カテゴリーの枠を外し、生活者の利用文脈でカテゴリーを再定義してから広告設計する型。',
+    scenes:['成熟カテゴリーでの新規需要創出','カテゴリーエントリーポイント(CEP)の再設計'], sourceType:'client_case', isPlaceholder:true, sourceName:'得意先案件：食品メーカーB社 新カテゴリー創出（サンプル）', sourceUrl:null, industry:'食品',
+    diff:'競合はスペック訴求の延長で終わることが多いが、この案件は生活者の利用シーン言語から逆算してカテゴリー名自体を作った点が他にない新しさ。',
+    ideas:['自動車のコンクエスト施策（CEPジャーニー設計）への転用','金融商品の新カテゴリー命名への応用'], registeredAt:'2026-07-12' },
+  { id:'cc-003', name:'バーチャル生活者による事前定性検証', summary:'AIペルソナに配信前クリエイティブを見せ、購入しない理由を先回りでヒアリングする型。',
+    scenes:['クリエイティブの事前検証','グルインの代替・補完'], sourceType:'client_case', isPlaceholder:true, sourceName:'型化ライブラリ：バーチャル生活者インタビュー標準型（サンプル）', sourceUrl:null, industry:'業種横断',
+    diff:'競合のAI活用は分析・予測が中心で、定性的な「買わなかった理由」の言語化まで踏み込む事例は確認できていない。実施までのリードタイムを圧縮できる点も差分。',
+    ideas:['金融商品の説明文言の事前検証','自治体広報のメッセージ事前検証'], registeredAt:'2026-07-15' },
+  { id:'cc-004', name:'関係人口KGIのファネル型可視化', summary:'購買ではなく「関係人口」を KGI に置き、認知→交流→継続のファネルで自治体施策を可視化する型。',
+    scenes:['自治体・公共案件のKPI設計','非購買KGIの合意形成'], sourceType:'client_case', isPlaceholder:true, sourceName:'得意先案件：自治体C 関係人口ダッシュボード（サンプル）', sourceUrl:null, industry:'公共・自治体',
+    diff:'民間の購買ファネルをそのまま持ち込むと自治体には刺さらないため、寄付・移住・交流人口といった非購買KGIに専用のファネルを作った点が新しい。',
+    ideas:['NPO・寄付団体の支援者育成ファネルへの転用','BtoB SaaSのリード育成ファネルの語彙変換'], registeredAt:'2026-07-18' },
+  { id:'cc-005', name:'エージェント型対話コマースのデモ実演', summary:'対話AIが要件を聞き取り、商品選定から決済代行まで自動再生で見せる提案デモの型。',
+    scenes:['大型競合提案の目玉デモ','コマース戦略の説得材料'], sourceType:'client_case', isPlaceholder:true, sourceName:'型化ライブラリ：Agentic Commerceデモ標準型（サンプル）', sourceUrl:null, industry:'小売・EC',
+    diff:'競合が「エージェンティックコマース」を言葉として掲げるにとどまる中、実際に動く対話デモまで用意して見せている点が実務上の差。得意先の意思決定を「話ではなく画面」で進められる。',
+    ideas:['車内エージェント（自動車）のデモへの型流用','法人向けFAQデモへの型流用'], registeredAt:'2026-07-20' },
+  { id:'cc-006', name:'3D可視化によるデータ基盤の説明簡略化', summary:'複雑なデータ統合構成をThree.jsの3D空間（コア＋ノード＋粒子フロー）で直感的に見せる型。',
+    scenes:['データ基盤・CDP構想の説明','経営層向けの技術説明の翻訳'], sourceType:'client_case', isPlaceholder:true, sourceName:'型化ライブラリ：AIオーケストレーション3D標準型（サンプル）', sourceUrl:null, industry:'業種横断',
+    diff:'競合の技術資料は図解が静的なポンチ絵にとどまることが多く、触って動かせる3D説明資料を提案時点で用意する事例は少ない。理解速度と印象の両方で差がつく。',
+    ideas:['通信キャリアの回線網説明への応用','金融のポイント経済圏の説明への応用'], registeredAt:'2026-07-22' },
+  { id:'cc-007', name:'採用×AI診断による人材マッチング型', summary:'応募者の価値観をAI診断で可視化し、企業文化とのマッチングスコアを提示する型。',
+    scenes:['HR・採用領域の新規提案','人手不足業種への打ち手'], sourceType:'client_case', isPlaceholder:true, sourceName:'得意先案件：人材サービスD社 価値観マッチング診断（サンプル）', sourceUrl:null, industry:'BtoB・HR',
+    diff:'一般的な適性診断はスキル・経歴中心だが、価値観の言語化まで踏み込みマッチングスコアとして返す点が新しい。職業安定法上の表示配慮も型の中に組み込んでいる。',
+    ideas:['住宅業界の工務店採用支援への転用','自治体の移住者マッチングへの転用'], registeredAt:'2026-07-25' },
+];
+
+const groupColor = { dentsu:'#1561a7', ca:'#2e9e5b', other:'#64748b', hdy:'#00b050' };
+const sourceLabel = { competitive:'競合事例', client_case:'自社案件' };
+const sourceColor = { competitive:'#1e3a5f', client_case:'#00b050' };
+
+/* ===================== レンダリング ===================== */
+
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.dataset.view===v));
+  document.getElementById('topbar-title').textContent = v==='home' ? 'ホーム' : v==='competitive' ? '競合インテリジェンス' : '型化ライブラリ';
+  window.scrollTo(0,0);
+}
+
+function rankingRow(r){
+  return `<tr><td>${r.rank}</td><td><span class="dot" style="background:${groupColor[r.group]}"></span>${r.company}</td>`+
+    `<td>${r.medium}</td><td>${r.date}</td><td style="${r.rank<=3?'font-weight:700':''}">${r.title}</td>`+
+    `<td class="num">${r.s}</td><td class="num">${r.i}</td><td class="num">${r.p}</td><td class="num" style="font-weight:700">${r.s+r.i+r.p}</td></tr>`;
+}
+function renderRankingTable(id, rows){
+  document.getElementById(id).innerHTML =
+    `<thead><tr><th>順位</th><th>会社</th><th>媒体</th><th>日付</th><th>タイトル</th><th class="num">構造</th><th class="num">影響</th><th class="num">実務</th><th class="num">計</th></tr></thead>`+
+    `<tbody>${rows.map(rankingRow).join('')}</tbody>`;
+}
+
+function renderCompetitive(){
+  renderRankingTable('tbl-ranking1', competitive.ranking1);
+  renderRankingTable('tbl-ranking2', competitive.ranking2);
+
+  document.getElementById('own-topics').innerHTML = competitive.ownTopics.map(t=>`
+    <div class="topic-row">
+      <span class="tag" style="${t.hi?'background:rgba(0,176,80,.12);color:#00854a;border-color:rgba(0,176,80,.3);':''}">${t.date}</span>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:13.5px; color:var(--ink);">${t.headline}</div>
+        <div style="font-size:12px; color:var(--ink-2); margin-top:4px;">${t.desc}</div>
+      </div>
+      <span class="tag">${t.ref}</span>
+    </div>`).join('');
+
+  document.getElementById('company-moves').innerHTML = competitive.companyMoves.map(m=>`
+    <div class="card">
+      <div class="card-title">${m.company}</div>
+      <div style="font-weight:700; font-size:13px; color:var(--ink); margin-bottom:8px;">${m.headline}</div>
+      <ul style="padding-left:16px; font-size:12px; color:var(--ink-2); line-height:1.8;">${m.facts.map(f=>`<li>${f}</li>`).join('')}</ul>
+      <div class="excl"><b>！</b> ${m.diff}</div>
+    </div>`).join('');
+
+  document.getElementById('world-trends').innerHTML = competitive.worldTrends.map(w=>`
+    <div class="card">
+      <div style="font-size:20px; font-weight:800; color:var(--navy);">${w.no}</div>
+      <div style="font-weight:700; font-size:12.5px; color:var(--ink); margin-top:4px;">${w.company}</div>
+      <div style="font-size:12px; font-weight:600; color:var(--ink); margin:6px 0;">${w.headline}</div>
+      <div style="font-size:11.5px; color:var(--ink-2); line-height:1.7;">${w.body}</div>
+      <div style="font-size:10.5px; color:var(--ink-3); margin-top:8px; border-top:1px solid var(--line-soft); padding-top:6px;">${w.date}</div>
+    </div>`).join('');
+}
+
+let currentSource = 'all';
+function setSource(v){
+  currentSource = v;
+  document.querySelectorAll('#p-source-seg button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  renderPatterns();
+}
+
+function initIndustryOptions(){
+  const industries = Array.from(new Set(patterns.map(p=>p.industry))).sort();
+  const sel = document.getElementById('p-industry');
+  industries.forEach(ind=>{
+    const opt = document.createElement('option');
+    opt.value = ind; opt.textContent = ind;
+    sel.appendChild(opt);
+  });
+}
+
+function renderPatterns(){
+  const q = document.getElementById('p-search').value.trim().toLowerCase();
+  const industry = document.getElementById('p-industry').value;
+  const filtered = patterns.filter(p=>{
+    if (currentSource!=='all' && p.sourceType!==currentSource) return false;
+    if (industry!=='all' && p.industry!==industry) return false;
+    if (q){
+      const hay = (p.name+' '+p.summary+' '+p.scenes.join(' ')+' '+p.sourceName).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  document.getElementById('p-count').textContent = `${filtered.length}件 / 全${patterns.length}件`;
+  document.getElementById('pattern-grid').innerHTML = filtered.map(p=>`
+    <div class="pattern-card" onclick="openModal('${p.id}')">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="tag" style="color:${sourceColor[p.sourceType]}; border-color:${sourceColor[p.sourceType]};">${sourceLabel[p.sourceType]}</span>
+        <span style="display:flex; gap:6px;">
+          ${p.isPlaceholder ? `<span class="tag badge-sample">サンプル</span>` : ''}
+          <span class="tag">${p.industry}</span>
+        </span>
+      </div>
+      <div class="pattern-name">${p.name}</div>
+      <div class="pattern-summary">${p.summary}</div>
+      <div class="pill-row" style="margin-top:10px;">${p.scenes.slice(0,2).map(s=>`<span class="pill">${s}</span>`).join('')}</div>
+      <div class="pattern-source">出典：${p.sourceName}</div>
+    </div>`).join('') || `<div class="card" style="grid-column:1/-1; text-align:center; color:var(--ink-3);">条件に一致する型が見つかりませんでした。</div>`;
+  document.getElementById('home-pattern-count').innerHTML = patterns.length+'<span class="unit">件</span>';
+}
+
+let currentPattern = null;
+function openModal(id){
+  const p = patterns.find(x=>x.id===id);
+  currentPattern = p;
+  document.getElementById('m-eyebrow').textContent = `${sourceLabel[p.sourceType]} ／ ${p.industry}`;
+  document.getElementById('m-title').textContent = p.name;
+  document.getElementById('m-scenes').innerHTML = p.scenes.map(s=>`<span class="pill">${s}</span>`).join('');
+  document.getElementById('m-diff').textContent = p.diff;
+  document.getElementById('m-ideas').innerHTML = p.ideas.map(i=>`<li>${i}</li>`).join('');
+  document.getElementById('m-source').textContent = p.sourceName;
+  document.getElementById('m-source-note').textContent = p.sourceType==='competitive'
+    ? `競合インテリジェンス月次レポート（${p.relatedMonth||'―'}）由来`
+    : 'Notion 得意先案件DB／型化ライブラリ（AIBP局）DB 由来';
+  document.getElementById('m-link-none').textContent = p.sourceType==='competitive'
+    ? 'リンクなし（社内資料である月次レポート本文が出典のため）'
+    : 'リンクなし（Notion連携が未接続のため、実ページへのリンクはまだ設定できない）';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); currentPattern=null; }
+
+function exportCurrentPattern(){
+  if (!currentPattern) return;
+  const p = currentPattern;
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name:'A16x9', width:13.333, height:7.5 });
+  pptx.layout = 'A16x9';
+  const slide = pptx.addSlide();
+  slide.background = { color:'FFFFFF' };
+
+  const FONT='BIZ UDPGothic', BAND='1E3A5F', EYE='F59E0B', WHITE='FFFFFF', LEAD_BG='FFF7ED', LEAD_TX='1A2C4A',
+        CARD='F7F8FA', HAIR='D9E1EC', INK='1F2933', EXCL_BG='ECECEC', YELLOW='F5C13C', SLATE='64748B';
+
+  slide.addShape('rect', { x:0, y:0, w:13.333, h:0.95, fill:{color:BAND} });
+  slide.addText('型化ライブラリ ｜ ' + (p.sourceType==='competitive'?'競合事例由来':'自社案件由来'), { x:0.5, y:0.13, w:8.0, h:0.3, fontFace:FONT, fontSize:13, bold:true, color:EYE, margin:0 });
+  slide.addText(p.name, { x:0.5, y:0.41, w:12.3, h:0.48, fontFace:FONT, fontSize:22, bold:true, color:WHITE, valign:'middle', margin:0 });
+
+  slide.addShape('roundRect', { x:0.52, y:1.16, w:12.3, h:0.72, rectRadius:0.06, fill:{color:LEAD_BG} });
+  slide.addText(p.summary, { x:0.69, y:1.22, w:12.13, h:0.6, fontFace:FONT, fontSize:15, bold:true, color:LEAD_TX, valign:'middle', margin:0, lineSpacingMultiple:1.05 });
+
+  slide.addShape('roundRect', { x:0.52, y:2.05, w:5.9, h:1.55, rectRadius:0.05, fill:{color:CARD}, line:{color:HAIR,width:1} });
+  slide.addText('適用場面', { x:0.72, y:2.15, w:5.5, h:0.28, fontFace:FONT, fontSize:12.5, bold:true, color:BAND, margin:0 });
+  slide.addText(p.scenes.map(s=>'・'+s).join('\n'), { x:0.72, y:2.46, w:5.5, h:1.05, fontFace:FONT, fontSize:12, color:INK, margin:0, lineSpacingMultiple:1.2 });
+
+  slide.addShape('roundRect', { x:0.52, y:3.72, w:5.9, h:1.05, rectRadius:0.05, fill:{color:CARD}, line:{color:HAIR,width:1} });
+  slide.addText('出典', { x:0.72, y:3.82, w:5.5, h:0.26, fontFace:FONT, fontSize:12.5, bold:true, color:BAND, margin:0 });
+  slide.addText(p.sourceName + '\n' + (p.sourceType==='competitive' ? `競合インテリジェンス月次レポート（${p.relatedMonth||'―'}）` : 'Notion 得意先案件DB／型化ライブラリ（AIBP局）DB'),
+    { x:0.72, y:4.08, w:5.5, h:0.6, fontFace:FONT, fontSize:11.5, color:SLATE, margin:0, lineSpacingMultiple:1.3 });
+
+  slide.addShape('roundRect', { x:6.62, y:2.05, w:6.2, h:2.72, rectRadius:0.05, fill:{color:CARD}, line:{color:HAIR,width:1} });
+  slide.addText('他の案件への水平展開アイデア', { x:6.82, y:2.15, w:5.8, h:0.28, fontFace:FONT, fontSize:12.5, bold:true, color:BAND, margin:0 });
+  slide.addText(p.ideas.map(s=>'・'+s).join('\n\n'), { x:6.82, y:2.46, w:5.8, h:2.2, fontFace:FONT, fontSize:12, color:INK, margin:0, lineSpacingMultiple:1.25 });
+
+  const exY=4.98, exH=1.9;
+  slide.addShape('rect', { x:0.52, y:exY, w:12.3, h:exH, fill:{color:EXCL_BG} });
+  slide.addShape('ellipse', { x:0.74, y:exY+(exH-0.64)/2, w:0.64, h:0.64, fill:{color:YELLOW} });
+  slide.addText('！', { x:0.74, y:exY+(exH-0.64)/2, w:0.64, h:0.64, fontFace:FONT, fontSize:26, bold:true, color:'1A1A1A', align:'center', valign:'middle', margin:0 });
+  slide.addText(p.diff, { x:1.6, y:exY+0.12, w:11.0, h:exH-0.24, fontFace:FONT, fontSize:13, color:LEAD_TX, valign:'middle', margin:0, lineSpacingMultiple:1.15 });
+
+  slide.addText(`登録日：${p.registeredAt}　出典：${p.sourceName}`, { x:0.5, y:7.14, w:11.7, h:0.22, fontFace:FONT, fontSize:12, color:SLATE, margin:0 });
+  slide.addText('AIBP局 型化ライブラリ（デモ用ダミー値）', { x:9.5, y:7.22, w:3.3, h:0.22, fontFace:FONT, fontSize:9, color:'6B7280', align:'right', margin:0 });
+
+  pptx.writeFile({ fileName:`pattern_${p.id}.pptx` });
+}
+
+/* ===================== init ===================== */
+renderCompetitive();
+initIndustryOptions();
+renderPatterns();
+if (location.hash) { showView(location.hash.slice(1)); }
+</script>
+</body>
+</html>
